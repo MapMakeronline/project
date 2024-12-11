@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { FileUp, PenLine, X } from 'lucide-react';
 
 interface AddDataModalProps {
@@ -6,6 +6,31 @@ interface AddDataModalProps {
 }
 
 export function AddDataModal({ onClose }: AddDataModalProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload/', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      onClose();
+    } catch (error) {
+      console.error('Error uploading file:', error);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 md:items-center">
       <div className="bg-white w-full max-w-sm rounded-t-xl md:rounded-xl shadow-xl">
@@ -36,11 +61,18 @@ export function AddDataModal({ onClose }: AddDataModalProps) {
             </div>
           </button>
 
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            accept=".geojson,.kml,.shp,.csv,.gml"
+            className="hidden"
+          />
+
           <button
             className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 rounded-lg group"
             onClick={() => {
-              // Handle import file
-              onClose();
+              fileInputRef.current?.click();
             }}
           >
             <div className="p-2 bg-gray-100 rounded-lg group-hover:bg-gray-200">

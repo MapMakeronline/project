@@ -16,7 +16,7 @@ export function AddDataModal({ onClose }: AddDataModalProps) {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('https://friendly-space-fishstick-q7v5jjrvg94jc4g6r-8000.app.github.dev/api/upload/', {
+      const response = await fetch('/api/upload/', {
         method: 'POST',
         body: formData,
       });

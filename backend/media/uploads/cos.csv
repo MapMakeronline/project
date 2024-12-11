@@ -1,0 +1,6 @@
+Copyproduct_id,product_name,price,quantity,category
+P001,Laptop Dell XPS 13,4999.99,15,Electronics
+P002,iPhone 13 Pro,5299.00,25,Mobile
+P003,Samsung TV 55",3499.99,8,Electronics
+P004,Apple Watch Series 7,2199.00,30,Wearables
+P005,AirPods Pro,999.99,45,Audio

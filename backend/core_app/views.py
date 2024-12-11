@@ -12,8 +12,12 @@ from .models import UploadedFile
 def upload_file(request):
     if request.method == 'POST':
         file = request.FILES.get('file')
+
         if not file:
             return JsonResponse({'error': 'No file provided'}, status=400)
+
+        # Получаем имя файла без расширения для title
+        title = os.path.splitext(file.name)[0]
 
         # Проверка расширения файла
         allowed_extensions = ['.geojson', '.kml', '.shp', '.csv', '.gml']
@@ -26,17 +30,23 @@ def upload_file(request):
         file_path = os.path.join('uploads', file.name)
         saved_path = default_storage.save(file_path, file)
 
-        # Создание записи в базе данных
-        uploaded_file = UploadedFile.objects.create(
-            file=saved_path,
-            original_filename=file.name,
-            file_type=file_ext[1:]  # убираем точку из расширения
-        )
+        try:
+            # Создание записи в базе данных
+            uploaded_file = UploadedFile.objects.create(
+                title=title,  # Используем имя файла без расширения
+                file=saved_path,
+                file_type=file_ext[1:]  # убираем точку из расширения
+            )
 
-        return JsonResponse({
-            'message': 'File uploaded successfully',
-            'file_path': saved_path,
-            'id': uploaded_file.id
-        })
+            return JsonResponse({
+                'message': 'File uploaded successfully',
+                'file_path': saved_path,
+                'id': uploaded_file.id,
+                'title': title
+            })
+        except Exception as e:
+            return JsonResponse({
+                'error': str(e)
+            }, status=500)
 
     return JsonResponse({'error': 'Invalid request method'}, status=405)

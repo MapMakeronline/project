@@ -1,5 +1,4 @@
 import csv
-import os
 
 from django.db import models, transaction, connection
 
@@ -89,3 +88,12 @@ class CSVFile(models.Model):
 
             except Exception as e:
                 raise Exception(f'Błąd podczas przetwarzania pliku CSV: {str(e)}')
+
+
+class UploadedFile(models.Model):
+    file = models.FileField(upload_to='uploads/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    file_type = models.CharField(max_length=10)
+
+    def __str__(self):
+        return f"{self.file.name} ({self.uploaded_at})"

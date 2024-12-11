@@ -16,8 +16,10 @@ class CSVFileAdmin(admin.ModelAdmin):
     get_file_name.short_description = 'Plik'
 
 
+
 @admin.register(UploadedFile)
 class UploadedFileAdmin(admin.ModelAdmin):
-    list_display = ('file', 'uploaded_at', 'file_type')
+    list_display = ('original_filename', 'file_type', 'uploaded_at', 'file')
     list_filter = ('file_type', 'uploaded_at')
-    search_fields = ('file',)
+    search_fields = ('original_filename',)
+    readonly_fields = ('uploaded_at',)

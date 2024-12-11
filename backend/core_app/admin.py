@@ -2,7 +2,7 @@ import os
 
 from django.contrib import admin
 
-from .models import CSVFile
+from .models import CSVFile, UploadedFile
 
 
 # Register your models here.
@@ -14,3 +14,12 @@ class CSVFileAdmin(admin.ModelAdmin):
         return os.path.basename(obj.file.name)
 
     get_file_name.short_description = 'Plik'
+
+
+
+@admin.register(UploadedFile)
+class UploadedFileAdmin(admin.ModelAdmin):
+    list_display = ('original_filename', 'file_type', 'uploaded_at', 'file')
+    list_filter = ('file_type', 'uploaded_at')
+    search_fields = ('original_filename',)
+    readonly_fields = ('uploaded_at',)

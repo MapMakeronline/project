@@ -6,12 +6,13 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
-  server: {
-    proxy: {
-      '/api': {
-        target: 'https://9681-31-182-251-97.ngrok-free.app',
-        changeOrigin: true,
-      }
-    }
-  }
+// server: {
+//   proxy: {
+//     '/api': {
+//       target: 'https://backend-1004166685896.europe-central2.run.app',
+//       changeOrigin: true,
+//       secure: true,
+//     }
+//   }
+// }
 });

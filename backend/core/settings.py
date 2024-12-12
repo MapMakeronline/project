@@ -25,11 +25,15 @@ load_dotenv()
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY')
 
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.ngrok-free.app']
-CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.app']
+ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = [
+     'https://backend-1004166685896.europe-central2.run.app',
+     'https://frontend-1004166685896.europe-central2.run.app'
+]
+CORS_ORIGIN_ALLOW_ALL = True
 APPEND_SLASH = False
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -52,6 +56,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
 
 ROOT_URLCONF = 'core.urls'
 

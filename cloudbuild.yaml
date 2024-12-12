@@ -1,13 +1,11 @@
 steps:
   # Backend build
-  # Backend build
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/backend', '-f', 'backend/Dockerfile', './backend']
 
   # Frontend build
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/frontend', '-f', 'frontend/Dockerfile', './frontend']
-
 
   # Push obrazy do Container Registry
   - name: 'gcr.io/cloud-builders/docker'

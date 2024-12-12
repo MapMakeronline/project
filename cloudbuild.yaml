@@ -25,7 +25,7 @@ steps:
       - '--image'
       - 'gcr.io/$PROJECT_ID/backend'
       - '--region'
-      - 'europe-west1'
+      - 'europe-central2'
       - '--platform'
       - 'managed'
 
@@ -38,7 +38,7 @@ steps:
       - '--image'
       - 'gcr.io/$PROJECT_ID/frontend'
       - '--region'
-      - 'europe-west1'
+      - 'europe-central2'
       - '--platform'
       - 'managed'
 

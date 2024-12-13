@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { MapPin } from 'lucide-react';
 import { SearchBar } from './SearchBar';
 import { FilterButton } from './FilterButton';
@@ -6,6 +6,7 @@ import { MinimizeButton } from '../common/MinimizeButton';
 import { SwipeHandler } from '../common/SwipeHandler';
 import { useHeaderStore } from '../../store/headerStore';
 import { HelpGuide } from './HelpGuide';
+import { GoogleLoginButton } from './GoogleLoginButton';
 
 export function Header() {
   const { isMinimized, setIsMinimized } = useHeaderStore();
@@ -30,11 +31,19 @@ export function Header() {
                 <MapPin className="w-7 h-7 md:w-6 md:h-6 text-blue-600" />
                 <span className="text-2xl md:text-xl font-bold">PlotFinder</span>
               </div>
-              <HelpGuide />
+              <div className="flex items-center gap-4">
+                <HelpGuide />
+                <div className="hidden md:block">
+                  <GoogleLoginButton />
+                </div>
+              </div>
             </div>
             <div className="flex items-center gap-4 w-full md:w-auto">
               <SearchBar />
               <FilterButton />
+              <div className="md:hidden">
+                <GoogleLoginButton />
+              </div>
             </div>
           </div>
         </div>

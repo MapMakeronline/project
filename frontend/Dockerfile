@@ -1,30 +1,18 @@
 # Build stage
-FROM node:18-alpine as build
-
+FROM node:18 as build
 WORKDIR /app
-
-# Copy package files
 COPY package*.json ./
-
-# Install dependencies
+RUN npm install -g typescript
 RUN npm install
-
-# Copy project files
 COPY . .
-
-# Build the app
 RUN npm run build
 
 # Production stage
 FROM nginx:alpine
-
-# Copy built assets from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx/nginx.conf /etc/nginx/templates/default.conf.template
 
-# Copy nginx configuration
-COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
-
-# Expose port 80
+ENV PORT=80
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD sh -c "envsubst '\$PORT' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"

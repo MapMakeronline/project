@@ -91,63 +91,67 @@ export function LayerTree() {
   };
 
   return (
-    <SwipeHandler onSwipe={handleSwipe} className={`fixed left-0 transition-all duration-300 bg-white/90 backdrop-blur-sm shadow-lg z-30 ${
-      headerIsMinimized ? 'top-0 h-screen' : 'top-16 h-[calc(100vh-4rem)]'
-    } ${
-      isMinimized ? '-translate-x-full' : 'translate-x-0'
-    }`}>
-      <div className="w-full md:w-72 h-full relative">
-        <div className="p-2 space-y-2 overflow-auto h-[calc(100%-4rem)]">
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="w-full px-3 py-2 flex items-center gap-2 bg-gray-50 hover:bg-gray-100 rounded-lg"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="text-sm text-gray-600">Add New Section</span>
-          </button>
-
-          <SectionNameModal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            onSubmit={handleCreateSection}
-          />
-
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={order}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="space-y-2">
-                {order.map((id) => (
-                  <LayerSection key={id} id={id}>
-                    {renderSection(id)}
-                  </LayerSection>
-                ))}
-              </div>
-            </SortableContext>
-
-            <DragOverlay>
-              {activeId ? (
-                <div className="opacity-80 bg-white rounded-lg shadow-lg">
-                  {renderSection(activeId)}
-                </div>
-              ) : null}
-            </DragOverlay>
-          </DndContext>
-        </div>
-        
-        <MinimizeButton
-          direction="left"
-          isMinimized={isMinimized}
-          onClick={() => setIsMinimized(!isMinimized)}
-          className="absolute -right-4 top-1/2 transform translate-x-full -translate-y-1/2"
-        />
+    <SwipeHandler
+  onSwipe={handleSwipe}
+  className={`fixed left-0 transition-all duration-300 bg-white/90 backdrop-blur-sm shadow-lg z-40 ${
+    headerIsMinimized ? 'top-0 h-screen' : 'top-16 h-[calc(100vh-4rem)]'
+  } ${
+    isMinimized ? '-translate-x-full' : 'translate-x-0'
+  }`}
+>
+  <div className="w-full md:w-72 h-full relative">
+    
+    <div className="p-4 border-b">
+      <div className="flex items-center gap-2">
+        <Layers className="w-5 h-5 text-blue-600" />
+        <h2 className="font-semibold">Layers</h2>
       </div>
-    </SwipeHandler>
+    </div>
+
+    
+    <div className="p-2 space-y-2 overflow-auto h-[calc(100%-8rem)]">
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={order.filter((id) => id !== 'base')} 
+          strategy={verticalListSortingStrategy}
+        >
+          {order
+            .filter((id) => id !== 'base') 
+            .map((id) => {
+              const Component = layerComponents[id];
+              return (
+                <LayerSection key={id} id={id}>
+                  <Component />
+                </LayerSection>
+              );
+            })}
+        </SortableContext>
+
+        <DragOverlay>
+          {activeId ? (
+            <div className="opacity-80 bg-white rounded-lg shadow-lg">
+              {React.createElement(layerComponents[activeId])}
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+    </div>
+
+  
+
+    {/* Minimize Button */}
+    <MinimizeButton
+      direction="left"
+      isMinimized={isMinimized}
+      onClick={() => setIsMinimized(!isMinimized)}
+      className="absolute -right-4 top-1/2 transform translate-x-full -translate-y-1/2"
+    />
+  </div>
+</SwipeHandler>
   );
 }

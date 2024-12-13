@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Layers } from 'lucide-react';
-import { 
-  DndContext, 
-  DragEndEvent, 
+import { useState } from 'react';
+import { Plus } from 'lucide-react';
+import {
+  DndContext,
+  DragEndEvent,
   closestCenter,
   DragStartEvent,
   DragOverlay,
@@ -10,8 +10,8 @@ import {
   useSensors,
   PointerSensor
 } from '@dnd-kit/core';
-import { 
-  SortableContext, 
+import {
+  SortableContext,
   verticalListSortingStrategy,
   arrayMove
 } from '@dnd-kit/sortable';
@@ -21,20 +21,25 @@ import { useHeaderStore } from '../../store/headerStore';
 import { BaseLayers } from './BaseLayers';
 import { PostGISLayers } from './PostGISLayers';
 import { GoogleSheetsLayers } from './GoogleSheetsLayers';
+import { CustomSection } from './CustomSection';
 import { LayerSection } from './LayerSection';
-import { useLayerOrderStore, LayerSectionId } from '../../store/layerOrderStore';
+import { useLayerOrderStore, BuiltInSectionId } from '../../store/layerOrderStore';
+import { useCustomSectionsStore } from '../../store/customSectionsStore';
+import { SectionNameModal } from './SectionCreation';
 
-const layerComponents = {
+const builtInComponents = {
   base: BaseLayers,
   postgis: PostGISLayers,
   sheets: GoogleSheetsLayers,
-};
+} as const;
 
 export function LayerTree() {
   const [isMinimized, setIsMinimized] = useState(false);
-  const [activeId, setActiveId] = useState<LayerSectionId | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const headerIsMinimized = useHeaderStore((state) => state.isMinimized);
-  const { order, setOrder } = useLayerOrderStore();
+  const { order, setOrder, addSection } = useLayerOrderStore();
+  const { addSection: addCustomSection } = useCustomSectionsStore();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -53,19 +58,36 @@ export function LayerTree() {
   };
 
   const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as LayerSectionId);
+    setActiveId(event.active.id as string);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const oldIndex = order.indexOf(active.id as LayerSectionId);
-      const newIndex = order.indexOf(over.id as LayerSectionId);
+      const oldIndex = order.indexOf(active.id as string);
+      const newIndex = order.indexOf(over.id as string);
       setOrder(arrayMove(order, oldIndex, newIndex));
     }
 
     setActiveId(null);
+  };
+
+  const handleCreateSection = (name: string) => {
+    const id = addCustomSection(name);
+    addSection(id);
+  };
+
+  const isBuiltInSection = (id: string): id is BuiltInSectionId => {
+    return id in builtInComponents;
+  };
+
+  const renderSection = (id: string) => {
+    if (isBuiltInSection(id)) {
+      const Component = builtInComponents[id];
+      return <Component />;
+    }
+    return <CustomSection sectionId={id} />;
   };
 
   return (
@@ -131,6 +153,5 @@ export function LayerTree() {
     />
   </div>
 </SwipeHandler>
-
   );
 }

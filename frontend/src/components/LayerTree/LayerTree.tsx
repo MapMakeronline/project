@@ -18,20 +18,11 @@ import {
 import { MinimizeButton } from '../common/MinimizeButton';
 import { SwipeHandler } from '../common/SwipeHandler';
 import { useHeaderStore } from '../../store/headerStore';
-import { BaseLayers } from './BaseLayers';
-import { PostGISLayers } from './PostGISLayers';
-import { GoogleSheetsLayers } from './GoogleSheetsLayers';
 import { CustomSection } from './CustomSection';
 import { LayerSection } from './LayerSection';
-import { useLayerOrderStore, BuiltInSectionId } from '../../store/layerOrderStore';
+import { useLayerOrderStore} from '../../store/layerOrderStore';
 import { useCustomSectionsStore } from '../../store/customSectionsStore';
 import { SectionNameModal } from './SectionCreation';
-
-const builtInComponents = {
-  base: BaseLayers,
-  postgis: PostGISLayers,
-  sheets: GoogleSheetsLayers,
-} as const;
 
 export function LayerTree() {
   const [isMinimized, setIsMinimized] = useState(false);
@@ -78,15 +69,8 @@ export function LayerTree() {
     addSection(id);
   };
 
-  const isBuiltInSection = (id: string): id is BuiltInSectionId => {
-    return id in builtInComponents;
-  };
 
   const renderSection = (id: string) => {
-    if (isBuiltInSection(id)) {
-      const Component = builtInComponents[id];
-      return <Component />;
-    }
     return <CustomSection sectionId={id} />;
   };
 

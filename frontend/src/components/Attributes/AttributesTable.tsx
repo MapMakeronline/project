@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { ChevronUp, ChevronDown, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { usePropertyStore } from '../../store/propertyStore';
 import { MinimizeButton } from '../common/MinimizeButton';
 import { SwipeHandler } from '../common/SwipeHandler';
 import { AddDataButton } from './AddDataButton';
+import { BaseLayers } from '../LayerTree/BaseLayers';
 
 export function AttributesTable() {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -20,8 +21,9 @@ export function AttributesTable() {
 
   if (!selectedProperty) {
     return (
-      <div className="fixed bottom-4 left-20 z-40">
+      <div className="fixed bottom-4  left-20 z-40">
         <AddDataButton />
+        <BaseLayers />
       </div>
     );
   }

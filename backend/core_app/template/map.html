@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wyszukiwarka Działek</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .search-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .search-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .search-button {
+            padding: 12px 20px;
+            background-color: #000;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            white-space: nowrap;
+        }
+        .search-button:hover {
+            background-color: #333;
+        }
+        #map {
+            height: 500px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            cursor: crosshair;
+        }
+        #parcel-info {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .info-row {
+            display: flex;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .info-label {
+            font-weight: bold;
+            width: 150px;
+            color: #333;
+        }
+        .error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 12px;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .loading:after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-left: 10px;
+            border: 3px solid #ddd;
+            border-top: 3px solid #000;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .toggle-slider {
+            background-color: #000;
+        }
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        .toggle-label {
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="search-box">
+            <input type="text"
+                   id="search-input"
+                   placeholder="Wprowadź ID działki (np. 146201_1.0001.1234)"
+                   class="search-input">
+            <button onclick="searchParcel()" class="search-button">Szukaj</button>
+        </div>
+        <div class="toggle-container">
+            <span class="toggle-label">Wyszukiwanie po najechaniu kursorem:</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="hover-toggle" checked>
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <div id="map"></div>
+        <div id="parcel-info"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.8.0/proj4.js"></script>
+
+    <script>
+        let map;
+        let parcelLayer;
+        let marker;
+        let debounceTimer;
+        let isSearching = false;
+        let hoverEnabled = true;
+
+        document.getElementById('hover-toggle').addEventListener('change', function(e) {
+            hoverEnabled = e.target.checked;
+            if (!hoverEnabled && parcelLayer) {
+                map.removeLayer(parcelLayer);
+                document.getElementById('parcel-info').innerHTML = '';
+            }
+        });
+
+        function initMap() {
+            map = L.map('map').setView([52.237049, 21.017532], 13);
+
+            const satellite = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+            });
+
+            const roads = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+            });
+
+            const hybrid = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+            }).addTo(map);
+
+            const baseMaps = {
+                "Mapa": roads,
+                "Satelita": satellite,
+                "Hybrid": hybrid
+            };
+
+            L.control.layers(baseMaps).addTo(map);
+
+            map.on('mousemove', function(e) {
+                if (!isSearching && hoverEnabled) {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        searchByLocation(e.latlng.lat, e.latlng.lng);
+                    }, 100);
+                }
+            });
+        }
+
+        function wgs84ToPUWG1992(lat, lng) {
+            const a = 6378137.0;
+            const e2 = 0.00669438002290;
+            const m0 = 0.9993;
+            const L0 = 19 * Math.PI / 180;
+            const fi = lat * Math.PI / 180;
+            const lambda = lng * Math.PI / 180;
+            const b2 = a * a * (1 - e2);
+            const ep2 = (a * a - b2) / b2;
+            const t = Math.tan(fi);
+            const n2 = ep2 * Math.pow(Math.cos(fi), 2);
+            const N = a / Math.sqrt(1 - e2 * Math.pow(Math.sin(fi), 2));
+            const dL = lambda - L0;
+            const dL2 = dL * dL;
+            const dL4 = dL2 * dL2;
+
+            const xgk = N * Math.cos(fi) * dL * (1 + (dL2 * Math.pow(Math.cos(fi), 2) * (1 - t * t + n2)) / 6 +
+                (dL4 * Math.pow(Math.cos(fi), 4) * (5 - 18 * t * t + t * t * t * t + 14 * n2 - 58 * n2 * t * t)) / 120);
+
+            const ygk = meridianArc(fi) + (N * Math.sin(fi) * Math.cos(fi) * dL2 / 2) *
+                (1 + (dL2 * Math.pow(Math.cos(fi), 2) * (5 - t * t + 9 * n2 + 4 * n2 * n2)) / 24 +
+                (dL4 * Math.pow(Math.cos(fi), 4) * (61 - 58 * t * t + t * t * t * t + 270 * n2 - 330 * n2 * t * t)) / 720);
+
+            const y92 = xgk * m0 + 500000;
+            const x92 = ygk * m0 - 5300000;
+
+            return { x: x92.toFixed(2), y: y92.toFixed(2) };
+        }
+
+        function meridianArc(fi) {
+            const a = 6378137.0;
+            const e2 = 0.00669438002290;
+            const e4 = e2 * e2;
+            const e6 = e4 * e2;
+            const e8 = e6 * e2;
+            const A0 = 1 - e2/4 - 3*e4/64 - 5*e6/256 - 175*e8/16384;
+            const A2 = 3/8 * (e2 + e4/4 + 15*e6/128 - 455*e8/4096);
+            const A4 = 15/256 * (e4 + 3*e6/4 - 77*e8/128);
+            const A6 = 35/3072 * (e6 + 59*e8/16);
+            const A8 = 315/131072 * e8;
+
+            return a * (A0*fi - A2*Math.sin(2*fi) + A4*Math.sin(4*fi) - A6*Math.sin(6*fi) + A8*Math.sin(8*fi));
+        }
+
+        function searchByLocation(lat, lng) {
+            const converted = wgs84ToPUWG1992(lat, lng);
+
+            fetch(`https://uldk.gugik.gov.pl/?request=GetParcelByXY&xy=${converted.y},${converted.x}&result=id,voivodeship,county,commune,region,parcel,geom_wkt&srid=2180`)
+                .then(response => response.text())
+                .then(data => {
+                    if (data.includes("ERROR")) {
+                        if (parcelLayer) {
+                            map.removeLayer(parcelLayer);
+                            parcelLayer = null;
+                        }
+                        document.getElementById('parcel-info').innerHTML = '';
+                        return;
+                    }
+                    const parts = data.split('|');
+                    if (parts.length < 7) {
+                        return;
+                    }
+                    displayParcelInfo(parts);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        async function searchParcel() {
+            const parcelId = document.getElementById('search-input').value.trim();
+            if (!parcelId) {
+                showError("Wprowadź ID działki");
+                return;
+            }
+
+            showLoading();
+            isSearching = true;
+
+            document.getElementById('hover-toggle').checked = false;
+            hoverEnabled = false;
+
+            try {
+                const response = await fetch(`https://uldk.gugik.gov.pl/?request=GetParcelById&id=${parcelId}&result=id,voivodeship,county,commune,region,parcel,geom_wkt&srid=2180`);
+                const data = await response.text();
+
+                if (data.includes("ERROR")) {
+                    throw new Error("Nie znaleziono działki o podanym ID");
+                }
+
+                const parts = data.split('|');
+                if (parts.length < 7) {
+                    throw new Error("Nieprawidłowy format danych");
+                }
+
+                displayParcelInfo(parts, true);
+            } catch (error) {
+                console.error('Error:', error);
+                showError(error.message || "Wystąpił błąd podczas wyszukiwania");
+            } finally {
+                isSearching = false;
+            }
+        }
+
+        function wktToGeoJSON(wktString) {
+            try {
+                proj4.defs("EPSG:2180","+proj=tmerc +lat_0=0 +lon_0=19 +k=0.9993 +x_0=500000 +y_0=-5300000 +ellps=GRS80 +units=m +no_defs");
+
+                wktString = wktString.replace(/SRID=\d+;/, '');
+
+                const matches = wktString.match(/POLYGON\s*\(\((.*?)\)\)/);
+                if (!matches || matches.length < 2) {
+                    throw new Error('Invalid WKT format');
+                }
+
+                const coordString = matches[1];
+                const coordinates = coordString.split(',').map(pair => {
+                    const [x, y] = pair.trim().split(/\s+/).map(Number);
+                    if (isNaN(x) || isNaN(y)) {
+                        throw new Error('Invalid coordinate values');
+                    }
+                    return proj4('EPSG:2180', 'EPSG:4326', [x, y]);
+                });
+
+                if (coordinates[0][0] !== coordinates[coordinates.length - 1][0] ||
+                    coordinates[0][1] !== coordinates[coordinates.length - 1][1]) {
+                    coordinates.push(coordinates[0]);
+                }
+
+                return {
+                    type: "Feature",
+                    properties: {},
+                    geometry: {
+                        type: "Polygon",
+                        coordinates: [coordinates]
+                    }
+                };
+            } catch (error) {
+                console.error('Error converting WKT to GeoJSON:', error);
+                return null;
+            }
+        }
+
+        function displayParcelInfo(parts, centerMap = false) {
+            try {
+                const wktGeometry = parts[6];
+                const geoJSON = wktToGeoJSON(wktGeometry);
+
+                if (!geoJSON) {
+                    return;
+                }
+
+                if (parcelLayer) {
+                    map.removeLayer(parcelLayer);
+                }
+
+                parcelLayer = L.geoJSON(geoJSON, {
+                    style: {
+                        color: '#0066FF',
+                        weight: 2,
+                        opacity: 1,
+                        fillColor: '#0066FF',
+                        fillOpacity: 0.3
+                    }
+                }).addTo(map);
+
+                if (centerMap) {
+                    map.fitBounds(parcelLayer.getBounds(), {
+                        padding: [50, 50],
+                        maxZoom: 19
+                    });
+                }
+
+                document.getElementById('parcel-info').innerHTML = `
+                    <div class="info-row">
+                        <span class="info-label">ID działki:</span>
+                        <span>${parts[0]}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Województwo:</span>
+                        <span>${parts[1]}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Powiat:</span>
+                        <span>${parts[2]}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Gmina:</span>
+                        <span>${parts[3]}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Obręb:</span>
+                        <span>${parts[4]}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Numer działki:</span>
+                        <span>${parts[5]}</span>
+                    </div>
+                `;
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('parcel-info').innerHTML = `
+                <div class="error">${message}</div>
+            `;
+        }
+
+        function showLoading() {
+            document.getElementById('parcel-info').innerHTML = '<div class="loading">Wyszukiwanie działki...</div>';
+        }
+
+        initMap();
+
+        document.getElementById('search-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchParcel();
+            }
+        });
+    </script>
+</body>
+</html>

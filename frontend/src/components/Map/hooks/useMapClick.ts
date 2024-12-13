@@ -25,17 +25,12 @@ export function useMapClick() {
     click: (e) => {
       const { lat, lng } = e.latlng;
       
-      // If identify tool is active, handle identification
-      if (activeTool === 'identify') {
-        setClickedPoint({ lat, lng });
-        setActiveLabel(`Selected point: Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`);
-        return;
-      }
+      // Always set clicked point to trigger plot boundary redraw
+      setClickedPoint({ lat, lng });
+      setActiveLabel(`Selected point: Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`);
 
-      // Handle single click zoom
+      // Handle single click zoom if enabled and no tool is active
       if (settings.singleClickZoom && !activeTool) {
-        setClickedPoint({ lat, lng });
-        setActiveLabel(`Selected point: Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`);
         map.setView([lat, lng], settings.singleClickZoomLevel, {
           animate: settings.zoomAnimation
         });

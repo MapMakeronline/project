@@ -21,20 +21,23 @@ interface FolderItemProps {
 function FolderItem({ sectionId, folder }: FolderItemProps) {
   const { addLayer, toggleLayerVisibility, toggleFolderExpanded } = useCustomSectionsStore();
   const setActiveLabel = useNotificationStore((state) => state.setActiveLabel);
+  const [isAddingLayer, setIsAddingLayer] = React.useState(false);
 
   const handleAddLayer = () => {
+    setIsAddingLayer(true);
     const layerName = `Layer ${folder.layers.length + 1}`;
     addLayer(sectionId, folder.id, layerName);
+    setTimeout(() => setIsAddingLayer(false), 300);
   };
 
   return (
     <div className="space-y-0.5">
-      <div className="px-3 py-2 flex items-center justify-between bg-gray-50 hover:bg-gray-100 rounded-lg">
+      <div className={`px-3 py-2 flex items-center justify-between bg-gray-50 rounded-lg ${!isAddingLayer ? 'hover:bg-gray-100' : ''}`}>
         <button
           className="flex items-center gap-2 flex-1"
           onClick={() => toggleFolderExpanded(sectionId, folder.id)}
-          onMouseEnter={() => setActiveLabel(folder.name)}
-          onMouseLeave={() => setActiveLabel(null)}
+          onMouseEnter={() => !isAddingLayer && setActiveLabel(folder.name)}
+          onMouseLeave={() => !isAddingLayer && setActiveLabel(null)}
         >
           {folder.isExpanded ? (
             <ChevronDown className="w-4 h-4" />
@@ -63,9 +66,9 @@ function FolderItem({ sectionId, folder }: FolderItemProps) {
             folder.layers.map(layer => (
               <label
                 key={layer.id}
-                className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-100/50 active:bg-gray-200/50 rounded-lg touch-manipulation"
-                onMouseEnter={() => setActiveLabel(layer.name)}
-                onMouseLeave={() => setActiveLabel(null)}
+                className={`flex items-center gap-2 px-2 py-1.5 rounded-lg touch-manipulation ${!isAddingLayer ? 'hover:bg-gray-100/50 active:bg-gray-200/50' : ''}`}
+                onMouseEnter={() => !isAddingLayer && setActiveLabel(layer.name)}
+                onMouseLeave={() => !isAddingLayer && setActiveLabel(null)}
               >
                 <input
                   type="checkbox"
@@ -92,19 +95,22 @@ export function CustomSection({ sectionId }: CustomSectionProps) {
   const { sections, addFolder } = useCustomSectionsStore();
   const setActiveLabel = useNotificationStore((state) => state.setActiveLabel);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [isAddingFolder, setIsAddingFolder] = React.useState(false);
 
   const section = sections.find(s => s.id === sectionId);
   if (!section) return null;
 
   const handleAddFolder = (name: string) => {
+    setIsAddingFolder(true);
     addFolder(sectionId, name);
+    setTimeout(() => setIsAddingFolder(false), 300);
   };
 
   return (
     <div className="rounded-lg overflow-hidden">
-      <div className="px-3 py-2 flex items-center justify-between bg-gray-50 hover:bg-gray-100 rounded-lg"
-        onMouseEnter={() => setActiveLabel(section.name)}
-        onMouseLeave={() => setActiveLabel(null)}
+      <div className={`px-3 py-2 flex items-center justify-between bg-gray-50 rounded-lg ${!isAddingFolder && !isModalOpen ? 'hover:bg-gray-100' : ''}`}
+        onMouseEnter={() => !isAddingFolder && !isModalOpen && setActiveLabel(section.name)}
+        onMouseLeave={() => !isAddingFolder && !isModalOpen && setActiveLabel(null)}
       >
         <button
           className="flex items-center gap-2 flex-1"

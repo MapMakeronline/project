@@ -91,7 +91,7 @@ export function LayerTree() {
   };
 
   return (
-    <SwipeHandler onSwipe={handleSwipe} className={`fixed left-0 transition-all duration-300 bg-white/90 backdrop-blur-sm shadow-lg z-40 ${
+    <SwipeHandler onSwipe={handleSwipe} className={`fixed left-0 transition-all duration-300 bg-white/90 backdrop-blur-sm shadow-lg z-30 ${
       headerIsMinimized ? 'top-0 h-screen' : 'top-16 h-[calc(100vh-4rem)]'
     } ${
       isMinimized ? '-translate-x-full' : 'translate-x-0'
@@ -122,11 +122,13 @@ export function LayerTree() {
               items={order}
               strategy={verticalListSortingStrategy}
             >
-              {order.map((id) => (
-                <LayerSection key={id} id={id}>
-                  {renderSection(id)}
-                </LayerSection>
-              ))}
+              <div className="space-y-2">
+                {order.map((id) => (
+                  <LayerSection key={id} id={id}>
+                    {renderSection(id)}
+                  </LayerSection>
+                ))}
+              </div>
             </SortableContext>
 
             <DragOverlay>

@@ -3,8 +3,12 @@ import os
 from django.core.files.storage import default_storage
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from .models import UploadedFile
+from .serializers import UserSerializer
 
 
 # Create your views here.
@@ -50,3 +54,13 @@ def upload_file(request):
             }, status=500)
 
     return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_info(request):
+    serializer = UserSerializer(request.user)
+    return Response({
+        **serializer.data,
+        'isAuthenticated': True
+    })

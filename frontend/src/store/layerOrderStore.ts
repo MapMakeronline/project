@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type BuiltInSectionId = 'base' | 'postgis' | 'sheets' | 'folders';
+export type BuiltInSectionId = 'base' | 'postgis' | 'sheets';
 export type LayerSectionId = BuiltInSectionId | string; // string for custom section IDs
 
 interface LayerOrderState {

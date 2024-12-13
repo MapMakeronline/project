@@ -2,6 +2,7 @@ import React from 'react';
 import { ChevronRight, ChevronDown, Plus, Folder } from 'lucide-react';
 import { useCustomSectionsStore } from '../../store/customSectionsStore';
 import { useNotificationStore } from '../../store/notificationStore';
+import { SectionNameModal } from './SectionCreation';
 
 interface FolderItemProps {
   sectionId: string;
@@ -51,7 +52,7 @@ function FolderItem({ sectionId, folder }: FolderItemProps) {
           <Plus className="w-4 h-4" />
         </button>
       </div>
-      
+
       {folder.isExpanded && (
         <div className="pl-6 space-y-0.5">
           {folder.layers.length === 0 ? (
@@ -90,18 +91,21 @@ export function CustomSection({ sectionId }: CustomSectionProps) {
   const [isExpanded, setIsExpanded] = React.useState(true);
   const { sections, addFolder } = useCustomSectionsStore();
   const setActiveLabel = useNotificationStore((state) => state.setActiveLabel);
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
 
   const section = sections.find(s => s.id === sectionId);
   if (!section) return null;
 
-  const handleAddFolder = () => {
-    const folderName = `Folder ${section.folders.length + 1}`;
-    addFolder(sectionId, folderName);
+  const handleAddFolder = (name: string) => {
+    addFolder(sectionId, name);
   };
 
   return (
     <div className="rounded-lg overflow-hidden">
-      <div className="px-3 py-2 flex items-center justify-between bg-gray-50 hover:bg-gray-100 rounded-lg">
+      <div className="px-3 py-2 flex items-center justify-between bg-gray-50 hover:bg-gray-100 rounded-lg"
+        onMouseEnter={() => setActiveLabel(section.name)}
+        onMouseLeave={() => setActiveLabel(null)}
+      >
         <button
           className="flex items-center gap-2 flex-1"
           onClick={() => setIsExpanded(!isExpanded)}
@@ -116,12 +120,18 @@ export function CustomSection({ sectionId }: CustomSectionProps) {
         <button
           className="p-1 hover:bg-gray-200 rounded"
           title="Add Folder"
-          onClick={handleAddFolder}
+          onClick={() => setIsModalOpen(true)}
         >
           <Plus className="w-4 h-4" />
         </button>
+
+        <SectionNameModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleAddFolder}
+        />
       </div>
-      
+
       {isExpanded && (
         <div className="pl-3 space-y-2 mt-2">
           {section.folders.length === 0 ? (
@@ -130,8 +140,8 @@ export function CustomSection({ sectionId }: CustomSectionProps) {
             </p>
           ) : (
             section.folders.map(folder => (
-              <FolderItem 
-                key={folder.id} 
+              <FolderItem
+                key={folder.id}
                 sectionId={sectionId}
                 folder={folder}
               />

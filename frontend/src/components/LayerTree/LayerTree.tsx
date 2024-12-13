@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Folder, Plus } from 'lucide-react';
-import { 
-  DndContext, 
-  DragEndEvent, 
+import { useState } from 'react';
+import { Plus } from 'lucide-react';
+import {
+  DndContext,
+  DragEndEvent,
   closestCenter,
   DragStartEvent,
   DragOverlay,
@@ -10,8 +10,8 @@ import {
   useSensors,
   PointerSensor
 } from '@dnd-kit/core';
-import { 
-  SortableContext, 
+import {
+  SortableContext,
   verticalListSortingStrategy,
   arrayMove
 } from '@dnd-kit/sortable';
@@ -21,22 +21,22 @@ import { useHeaderStore } from '../../store/headerStore';
 import { BaseLayers } from './BaseLayers';
 import { PostGISLayers } from './PostGISLayers';
 import { GoogleSheetsLayers } from './GoogleSheetsLayers';
-import { LayerFolders } from './LayerFolders';
 import { CustomSection } from './CustomSection';
 import { LayerSection } from './LayerSection';
 import { useLayerOrderStore, BuiltInSectionId } from '../../store/layerOrderStore';
 import { useCustomSectionsStore } from '../../store/customSectionsStore';
+import { SectionNameModal } from './SectionCreation';
 
 const builtInComponents = {
   base: BaseLayers,
   postgis: PostGISLayers,
   sheets: GoogleSheetsLayers,
-  folders: LayerFolders,
 } as const;
 
 export function LayerTree() {
   const [isMinimized, setIsMinimized] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const headerIsMinimized = useHeaderStore((state) => state.isMinimized);
   const { order, setOrder, addSection } = useLayerOrderStore();
   const { addSection: addCustomSection } = useCustomSectionsStore();
@@ -73,8 +73,7 @@ export function LayerTree() {
     setActiveId(null);
   };
 
-  const handleAddSection = () => {
-    const name = `New Section ${order.length + 1}`;
+  const handleCreateSection = (name: string) => {
     const id = addCustomSection(name);
     addSection(id);
   };
@@ -100,12 +99,18 @@ export function LayerTree() {
       <div className="w-full md:w-72 h-full relative">
         <div className="p-2 space-y-2 overflow-auto h-[calc(100%-4rem)]">
           <button
-            onClick={handleAddSection}
+            onClick={() => setIsModalOpen(true)}
             className="w-full px-3 py-2 flex items-center gap-2 bg-gray-50 hover:bg-gray-100 rounded-lg"
           >
             <Plus className="w-4 h-4" />
             <span className="text-sm text-gray-600">Add New Section</span>
           </button>
+
+          <SectionNameModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            onSubmit={handleCreateSection}
+          />
 
           <DndContext
             sensors={sensors}

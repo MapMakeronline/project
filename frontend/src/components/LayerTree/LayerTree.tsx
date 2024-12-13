@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layers } from 'lucide-react';
+import { Folder, Plus } from 'lucide-react';
 import { 
   DndContext, 
   DragEndEvent, 
@@ -21,20 +21,25 @@ import { useHeaderStore } from '../../store/headerStore';
 import { BaseLayers } from './BaseLayers';
 import { PostGISLayers } from './PostGISLayers';
 import { GoogleSheetsLayers } from './GoogleSheetsLayers';
+import { LayerFolders } from './LayerFolders';
+import { CustomSection } from './CustomSection';
 import { LayerSection } from './LayerSection';
-import { useLayerOrderStore, LayerSectionId } from '../../store/layerOrderStore';
+import { useLayerOrderStore, BuiltInSectionId } from '../../store/layerOrderStore';
+import { useCustomSectionsStore } from '../../store/customSectionsStore';
 
-const layerComponents = {
+const builtInComponents = {
   base: BaseLayers,
   postgis: PostGISLayers,
   sheets: GoogleSheetsLayers,
-};
+  folders: LayerFolders,
+} as const;
 
 export function LayerTree() {
   const [isMinimized, setIsMinimized] = useState(false);
-  const [activeId, setActiveId] = useState<LayerSectionId | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const headerIsMinimized = useHeaderStore((state) => state.isMinimized);
-  const { order, setOrder } = useLayerOrderStore();
+  const { order, setOrder, addSection } = useLayerOrderStore();
+  const { addSection: addCustomSection } = useCustomSectionsStore();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -53,19 +58,37 @@ export function LayerTree() {
   };
 
   const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as LayerSectionId);
+    setActiveId(event.active.id as string);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const oldIndex = order.indexOf(active.id as LayerSectionId);
-      const newIndex = order.indexOf(over.id as LayerSectionId);
+      const oldIndex = order.indexOf(active.id as string);
+      const newIndex = order.indexOf(over.id as string);
       setOrder(arrayMove(order, oldIndex, newIndex));
     }
 
     setActiveId(null);
+  };
+
+  const handleAddSection = () => {
+    const name = `New Section ${order.length + 1}`;
+    const id = addCustomSection(name);
+    addSection(id);
+  };
+
+  const isBuiltInSection = (id: string): id is BuiltInSectionId => {
+    return id in builtInComponents;
+  };
+
+  const renderSection = (id: string) => {
+    if (isBuiltInSection(id)) {
+      const Component = builtInComponents[id];
+      return <Component />;
+    }
+    return <CustomSection sectionId={id} />;
   };
 
   return (
@@ -75,14 +98,15 @@ export function LayerTree() {
       isMinimized ? '-translate-x-full' : 'translate-x-0'
     }`}>
       <div className="w-full md:w-72 h-full relative">
-        <div className="p-4 border-b">
-          <div className="flex items-center gap-2">
-            <Layers className="w-5 h-5 text-blue-600" />
-            <h2 className="font-semibold">Layers</h2>
-          </div>
-        </div>
-
         <div className="p-2 space-y-2 overflow-auto h-[calc(100%-4rem)]">
+          <button
+            onClick={handleAddSection}
+            className="w-full px-3 py-2 flex items-center gap-2 bg-gray-50 hover:bg-gray-100 rounded-lg"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="text-sm text-gray-600">Add New Section</span>
+          </button>
+
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -93,20 +117,17 @@ export function LayerTree() {
               items={order}
               strategy={verticalListSortingStrategy}
             >
-              {order.map((id) => {
-                const Component = layerComponents[id];
-                return (
-                  <LayerSection key={id} id={id}>
-                    <Component />
-                  </LayerSection>
-                );
-              })}
+              {order.map((id) => (
+                <LayerSection key={id} id={id}>
+                  {renderSection(id)}
+                </LayerSection>
+              ))}
             </SortableContext>
 
             <DragOverlay>
               {activeId ? (
                 <div className="opacity-80 bg-white rounded-lg shadow-lg">
-                  {React.createElement(layerComponents[activeId])}
+                  {renderSection(activeId)}
                 </div>
               ) : null}
             </DragOverlay>

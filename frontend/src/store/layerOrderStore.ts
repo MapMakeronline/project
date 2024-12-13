@@ -1,23 +1,24 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
-export type LayerSectionId = 'base' | 'postgis' | 'sheets';
+export type BuiltInSectionId = 'base' | 'postgis' | 'sheets' | 'folders';
+export type LayerSectionId = BuiltInSectionId | string; // string for custom section IDs
 
-interface LayerOrderStore {
+interface LayerOrderState {
   order: LayerSectionId[];
-  setOrder: (order: LayerSectionId[]) => void;
+  addSection: (id: string) => void;
+  removeSection: (id: string) => void;
+  setOrder: (newOrder: LayerSectionId[]) => void;
 }
 
-const defaultOrder: LayerSectionId[] = ['base', 'postgis', 'sheets'];
-
-export const useLayerOrderStore = create<LayerOrderStore>()(
-  persist(
-    (set) => ({
-      order: defaultOrder,
-      setOrder: (order) => set({ order }),
-    }),
-    {
-      name: 'layer-order',
-    }
-  )
-);
+export const useLayerOrderStore = create<LayerOrderState>((set) => ({
+  order: ['base', 'postgis', 'sheets', 'folders'],
+  addSection: (id: string) =>
+    set((state) => ({
+      order: [...state.order, id],
+    })),
+  removeSection: (id: string) =>
+    set((state) => ({
+      order: state.order.filter((sectionId) => sectionId !== id),
+    })),
+  setOrder: (newOrder) => set({ order: newOrder }),
+}));

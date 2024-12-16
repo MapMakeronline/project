@@ -162,11 +162,9 @@ export function SelectedPointMarker() {
     };
   
     try {
-      //if () return;
       let urlId= transformId(parcelInfo?.id)
       const proxyUrl = 'https://api.allorigins.win/raw?url=';
       const targetUrl = encodeURIComponent(`https://integracja.gugik.gov.pl/eziudp/index.php?teryt=${urlId}`);
-      console.log(urlId);
       const response = await fetch(`${proxyUrl}${targetUrl}`, {
         method: 'GET',
         headers: {
@@ -251,6 +249,7 @@ export function SelectedPointMarker() {
           setGeoJsonData(geoJSON);
         }
       }
+      fetchCollectionLinks();
     } catch (err) {
       setError("Error fetching plot information");
       console.error('Error:', err);
@@ -301,16 +300,6 @@ export function SelectedPointMarker() {
               
               <span className="font-medium text-gray-700">Nr działki:</span>
               <span className="text-gray-900">{parcelInfo.parcel}</span>
-
-              <span className="font-medium text-gray-700">Sprawdź usługi:</span>
-              <span>
-                <button 
-                  onClick={() => fetchCollectionLinks()}
-                  className="bg-black hover:bg-blue-700 text-white px-3 py-1 rounded-md text-xs font-medium transition-colors"
-                >
-                  Sprawdź
-                </button>
-              </span>
 
               <div className="col-span-2 mt-2 border-t pt-2">
                 <div className="flex flex-col gap-2">

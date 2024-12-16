@@ -141,7 +141,7 @@ export function SelectedPointMarker() {
   };
   
 
-  const fetchCollectionLinks = async () => {
+  const fetchCollectionLinks = async (parcelId: string) => {
     const CONFIG = {
       "Zbiór danych przestrzennych dla miejscowych planów zagospodarowania przestrzennego": {
         setter: setMPZP,
@@ -162,7 +162,7 @@ export function SelectedPointMarker() {
     };
   
     try {
-      let urlId= transformId(parcelInfo?.id)
+      let urlId= transformId(parcelId)
       const proxyUrl = 'https://api.allorigins.win/raw?url=';
       const targetUrl = encodeURIComponent(`https://integracja.gugik.gov.pl/eziudp/index.php?teryt=${urlId}`);
       const response = await fetch(`${proxyUrl}${targetUrl}`, {
@@ -243,13 +243,13 @@ export function SelectedPointMarker() {
         };
         
         setParcelInfo(parcelData);
-        
+        await fetchCollectionLinks(parcelData.id);
         const geoJSON = wktToGeoJSON(parts[6]);
         if (geoJSON) {
           setGeoJsonData(geoJSON);
         }
       }
-      fetchCollectionLinks();
+      
     } catch (err) {
       setError("Error fetching plot information");
       console.error('Error:', err);

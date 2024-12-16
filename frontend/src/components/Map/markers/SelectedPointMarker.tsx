@@ -152,8 +152,7 @@ export function SelectedPointMarker() {
   
     try {
       const proxyUrl = 'https://api.allorigins.win/raw?url=';
-      const targetUrl = encodeURIComponent(`https://integracja.gugik.gov.pl/eziudp/index.php?teryt=${parcelInfo?.id.slice(0, 7)}`);
-      console.log(parcelInfo?.id.slice(0, 7))
+      const targetUrl = encodeURIComponent(`https://integracja.gugik.gov.pl/eziudp/index.php?teryt=${parcelInfo?.id.slice(0, 5)}`);
       
       const response = await fetch(`${proxyUrl}${targetUrl}`, {
         method: 'GET',

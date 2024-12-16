@@ -26,7 +26,18 @@ export function SelectedPointMarker() {
   const [POG,setPOG] = useState<string | null>('Brak danych');
   const [EMiA,setEMiA] =useState<string | null>('Brak danych');
 
-
+  function transformId(id) {
+    id = id.trim();
+    id = id.slice(0, 8);
+  
+    const lastChar = id.slice(-1);
+    
+    if (lastChar === '8' || lastChar === '9') {
+      return id.slice(0, -4) + '01_1';
+    }
+  
+    return id.slice(0, 6);
+  }
 
   const wgs84ToPUWG1992 = (lat: number, lon: number) => {
     const a = 6378137.0;
@@ -151,9 +162,11 @@ export function SelectedPointMarker() {
     };
   
     try {
+      //if () return;
+      let urlId= transformId(parcelInfo?.id)
       const proxyUrl = 'https://api.allorigins.win/raw?url=';
-      const targetUrl = encodeURIComponent(`https://integracja.gugik.gov.pl/eziudp/index.php?teryt=${parcelInfo?.id.slice(0, 5)}`);
-      
+      const targetUrl = encodeURIComponent(`https://integracja.gugik.gov.pl/eziudp/index.php?teryt=${urlId}`);
+      console.log(urlId);
       const response = await fetch(`${proxyUrl}${targetUrl}`, {
         method: 'GET',
         headers: {

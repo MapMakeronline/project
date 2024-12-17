@@ -1,18 +1,27 @@
 import React from 'react';
-import { X, Save, Plus } from 'lucide-react';
+import { X, Save, Plus, Edit2 } from 'lucide-react';
 
-interface SectionNameModalProps {
+export interface SectionNameModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (name: string) => void;
+  initialValue?: string;
+  title?: string;
 }
 
 export function SectionNameModal({ 
   isOpen, 
   onClose, 
   onSubmit,
+  initialValue = '',
+  title = 'Create New Section'
 }: SectionNameModalProps) {
-  const [name, setName] = React.useState('');
+  const [name, setName] = React.useState(initialValue);
+
+  // Update name when initialValue changes
+  React.useEffect(() => {
+    setName(initialValue);
+  }, [initialValue]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,15 +32,21 @@ export function SectionNameModal({
     setName('');
   };
 
+  const isEditing = Boolean(initialValue);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Create New Section
+            {isEditing ? (
+              <Edit2 className="w-4 h-4" />
+            ) : (
+              <Plus className="w-4 h-4" />
+            )}
+            {title}
           </h2>
           <button
             onClick={onClose}
@@ -45,7 +60,7 @@ export function SectionNameModal({
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Enter section name"
+            placeholder={isEditing ? "Enter new name" : "Enter name"}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             autoFocus
           />
@@ -64,7 +79,7 @@ export function SectionNameModal({
               className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
             >
               <Save className="w-4 h-4" />
-              Create
+              {isEditing ? 'Save' : 'Create'}
             </button>
           </div>
         </form>

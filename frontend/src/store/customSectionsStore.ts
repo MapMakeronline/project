@@ -29,6 +29,8 @@ interface CustomSectionsState {
   removeSection: (id: string) => void;
   removeFolder: (sectionId: string, folderId: string) => void;
   removeLayer: (sectionId: string, folderId: string, layerId: string) => void;
+  renameSection: (sectionId: string, newName: string) => void;
+  renameFolder: (sectionId: string, folderId: string, newName: string) => void;
 }
 
 export const useCustomSectionsStore = create<CustomSectionsState>((set) => ({
@@ -154,6 +156,35 @@ export const useCustomSectionsStore = create<CustomSectionsState>((set) => ({
                   ? {
                       ...folder,
                       layers: folder.layers.filter((layer) => layer.id !== layerId),
+                    }
+                  : folder
+              ),
+            }
+          : section
+      ),
+    })),
+  renameSection: (sectionId: string, newName: string) =>
+    set((state) => ({
+      sections: state.sections.map((section) =>
+        section.id === sectionId
+          ? {
+              ...section,
+              name: newName,
+            }
+          : section
+      ),
+    })),
+  renameFolder: (sectionId: string, folderId: string, newName: string) =>
+    set((state) => ({
+      sections: state.sections.map((section) =>
+        section.id === sectionId
+          ? {
+              ...section,
+              folders: section.folders.map((folder) =>
+                folder.id === folderId
+                  ? {
+                      ...folder,
+                      name: newName,
                     }
                   : folder
               ),

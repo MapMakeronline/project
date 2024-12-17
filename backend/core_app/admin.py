@@ -2,8 +2,10 @@ import logging
 import os
 
 from django.contrib import admin
+from django.contrib import messages
 from django.db import connection
-from django.http import HttpResponse, FileResponse
+from django.http import FileResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import path, reverse
 from django.utils.html import format_html
 
@@ -102,7 +104,7 @@ class UploadedFileAdmin(admin.ModelAdmin):
 
 @admin.register(DatabaseTable)
 class DatabaseTableAdmin(admin.ModelAdmin):
-    list_display = ('table_name', 'row_count', 'view_table_link')
+    list_display = ('table_name', 'row_count', 'view_table_link', 'delete_table_link')
     list_display_links = ('table_name',)
     search_fields = ('table_name',)
 
@@ -110,7 +112,7 @@ class DatabaseTableAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        return True
 
     def has_change_permission(self, request, obj=None):
         return False
@@ -123,6 +125,20 @@ class DatabaseTableAdmin(admin.ModelAdmin):
 
     view_table_link.short_description = 'Podgląd'
 
+    def delete_table_link(self, obj):
+        if obj and obj.table_name:
+            url = reverse('admin:delete-table', args=[obj.table_name])
+            return format_html(
+                '<a href="{}" class="button" style="background-color: #ff4444; color: white; '
+                'padding: 5px 10px; border-radius: 3px; text-decoration: none;" '
+                'onclick="return confirm(\'Czy na pewno chcesz usunąć tabelę {}? '
+                'Tej operacji nie można cofnąć.\')">Usuń tabelę</a>',
+                url, obj.table_name
+            )
+        return "N/A"
+
+    delete_table_link.short_description = 'Usuń'
+
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
@@ -131,13 +147,43 @@ class DatabaseTableAdmin(admin.ModelAdmin):
                 self.admin_site.admin_view(self.view_table_content),
                 name='view-table-content',
             ),
+            path(
+                'delete_table/<str:table_name>/',
+                self.admin_site.admin_view(self.delete_table),
+                name='delete-table',
+            ),
         ]
         return custom_urls + urls
+
+    def delete_table(self, request, table_name):
+        if request.method == 'GET':
+            try:
+                with connection.cursor() as cursor:
+                    # Проверяем существование таблицы
+                    cursor.execute("""
+                        SELECT EXISTS (
+                            SELECT FROM information_schema.tables 
+                            WHERE table_schema = 'public' 
+                            AND table_name = %s
+                        )
+                    """, [table_name])
+                    exists = cursor.fetchone()[0]
+
+                    if not exists:
+                        messages.error(request, f'Tabela {table_name} nie istnieje.')
+                    else:
+                        # Удаляем таблицу
+                        cursor.execute(f'DROP TABLE "{table_name}" CASCADE')
+                        messages.success(request, f'Tabela {table_name} została usunięta.')
+            except Exception as e:
+                logger.error(f"Error deleting table {table_name}: {str(e)}")
+                messages.error(request, f'Błąd podczas usuwania tabeli: {str(e)}')
+
+            return HttpResponseRedirect(reverse('admin:core_app_databasetable_changelist'))
 
     def view_table_content(self, request, table_name):
         try:
             with connection.cursor() as cursor:
-                # Проверяем существование таблицы
                 cursor.execute("""
                     SELECT EXISTS (
                         SELECT FROM information_schema.tables 
@@ -150,7 +196,6 @@ class DatabaseTableAdmin(admin.ModelAdmin):
                 if not exists:
                     return HttpResponse(f"Tabela {table_name} nie istnieje")
 
-                # Получаем колонки
                 cursor.execute("""
                     SELECT column_name 
                     FROM information_schema.columns 
@@ -160,7 +205,6 @@ class DatabaseTableAdmin(admin.ModelAdmin):
                 """, [table_name])
                 columns = [col[0] for col in cursor.fetchall()]
 
-                # Получаем данные
                 cursor.execute(f'SELECT * FROM "{table_name}" LIMIT 1000')
                 rows = cursor.fetchall()
 

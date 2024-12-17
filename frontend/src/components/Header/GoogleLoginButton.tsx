@@ -1,30 +1,51 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuthStore } from '../../store/authStore';
 
 export function GoogleLoginButton() {
-  const { isAuthenticated, user, logout } = useAuthStore();
+  const { isAuthenticated, user, logout, setUser } = useAuthStore();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/user/', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const userData = await response.json();
+          console.log('User data received:', userData);
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+      }
+    };
+
+    checkAuth();
+  }, [setUser]);
 
   const handleGoogleLogin = () => {
-    // TODO: Implement Google OAuth login
-    window.location.href = '/api/auth/google';
+    window.location.href = 'http://127.0.0.1:8000/accounts/google/login/';
   };
 
   if (isAuthenticated && user) {
     return (
       <div className="flex items-center gap-2">
         {user.picture && (
-          <img 
-            src={user.picture} 
-            alt={user.name} 
+          <img
+            src={user.picture}
+            alt={user.name}
             className="w-8 h-8 rounded-full"
           />
         )}
-        <button
-          onClick={logout}
-          className="text-sm text-gray-700 hover:text-gray-900"
-        >
-          Wyloguj
-        </button>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-800">{user.name || user.email}</span>
+          <button
+            onClick={logout}
+            className="text-sm text-gray-700 hover:text-gray-900"
+          >
+            Wyloguj
+          </button>
+        </div>
       </div>
     );
   }

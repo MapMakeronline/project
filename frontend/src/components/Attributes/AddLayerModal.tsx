@@ -39,7 +39,6 @@ export function AddLayerModal({ onClose }: AddDataModalProps) {
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(xml, 'text/xml');
 
-      // Parse layers from the WMS GetCapabilities XML response
       const layersArray = Array.from(xmlDoc.getElementsByTagName('Layer')).map((layer) => ({
         name: layer.getElementsByTagName('Name')[0]?.textContent || 'Unnamed Layer',
         title: layer.getElementsByTagName('Title')[0]?.textContent || 'No Title',

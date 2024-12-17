@@ -3,8 +3,7 @@ import os
 from django.core.files.storage import default_storage
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from .models import UploadedFile
@@ -57,8 +56,15 @@ def upload_file(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
 def get_user_info(request):
+    print("Session ID:", request.session.session_key)
+    print("Is authenticated:", request.user.is_authenticated)
+    print("User:", request.user)
+    print("Cookies:", request.COOKIES)
+
+    if not request.user.is_authenticated:
+        return Response({'isAuthenticated': False})
+
     serializer = UserSerializer(request.user)
     return Response({
         **serializer.data,

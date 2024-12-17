@@ -6,31 +6,23 @@ interface Layer {
   visible: boolean;
 }
 
-interface Folder {
+export interface CustomSection {
   id: string;
   name: string;
   layers: Layer[];
   isExpanded?: boolean;
 }
 
-export interface CustomSection {
-  id: string;
-  name: string;
-  folders: Folder[];
-}
-
 interface CustomSectionsState {
   sections: CustomSection[];
   addSection: (name: string) => string; // returns section id
-  addFolder: (sectionId: string, folderName: string) => void;
-  addLayer: (sectionId: string, folderId: string, layerName: string) => void;
-  toggleLayerVisibility: (sectionId: string, folderId: string, layerId: string) => void;
-  toggleFolderExpanded: (sectionId: string, folderId: string) => void;
+  addLayer: (sectionId: string, layerName: string) => void;
+  toggleLayerVisibility: (sectionId: string, layerId: string) => void;
+  toggleSectionExpanded: (sectionId: string) => void;
   removeSection: (id: string) => void;
-  removeFolder: (sectionId: string, folderId: string) => void;
-  removeLayer: (sectionId: string, folderId: string, layerId: string) => void;
+  removeLayer: (sectionId: string, layerId: string) => void;
   renameSection: (sectionId: string, newName: string) => void;
-  renameFolder: (sectionId: string, folderId: string, newName: string) => void;
+  renameLayer: (sectionId: string, layerId: string, newName: string) => void;
 }
 
 export const useCustomSectionsStore = create<CustomSectionsState>((set) => ({
@@ -43,90 +35,51 @@ export const useCustomSectionsStore = create<CustomSectionsState>((set) => ({
         {
           id,
           name,
-          folders: [],
+          layers: [],
+          isExpanded: true,
         },
       ],
     }));
     return id;
   },
-  addFolder: (sectionId: string, folderName: string) =>
+  addLayer: (sectionId: string, layerName: string) =>
     set((state) => ({
       sections: state.sections.map((section) =>
         section.id === sectionId
           ? {
               ...section,
-              folders: [
-                ...section.folders,
+              layers: [
+                ...section.layers,
                 {
                   id: Math.random().toString(36).substr(2, 9),
-                  name: folderName,
-                  layers: [],
-                  isExpanded: true,
+                  name: layerName,
+                  visible: true,
                 },
               ],
             }
           : section
       ),
     })),
-  addLayer: (sectionId: string, folderId: string, layerName: string) =>
+  toggleLayerVisibility: (sectionId: string, layerId: string) =>
     set((state) => ({
       sections: state.sections.map((section) =>
         section.id === sectionId
           ? {
               ...section,
-              folders: section.folders.map((folder) =>
-                folder.id === folderId
-                  ? {
-                      ...folder,
-                      layers: [
-                        ...folder.layers,
-                        {
-                          id: Math.random().toString(36).substr(2, 9),
-                          name: layerName,
-                          visible: true,
-                        },
-                      ],
-                    }
-                  : folder
+              layers: section.layers.map((layer) =>
+                layer.id === layerId
+                  ? { ...layer, visible: !layer.visible }
+                  : layer
               ),
             }
           : section
       ),
     })),
-  toggleLayerVisibility: (sectionId: string, folderId: string, layerId: string) =>
+  toggleSectionExpanded: (sectionId: string) =>
     set((state) => ({
       sections: state.sections.map((section) =>
         section.id === sectionId
-          ? {
-              ...section,
-              folders: section.folders.map((folder) =>
-                folder.id === folderId
-                  ? {
-                      ...folder,
-                      layers: folder.layers.map((layer) =>
-                        layer.id === layerId
-                          ? { ...layer, visible: !layer.visible }
-                          : layer
-                      ),
-                    }
-                  : folder
-              ),
-            }
-          : section
-      ),
-    })),
-  toggleFolderExpanded: (sectionId: string, folderId: string) =>
-    set((state) => ({
-      sections: state.sections.map((section) =>
-        section.id === sectionId
-          ? {
-              ...section,
-              folders: section.folders.map((folder) =>
-                folder.id === folderId
-                  ? { ...folder, isExpanded: !folder.isExpanded }
-                  : folder
-              ),
-            }
+          ? { ...section, isExpanded: !section.isExpanded }
           : section
       ),
     })),
@@ -134,31 +87,13 @@ export const useCustomSectionsStore = create<CustomSectionsState>((set) => ({
     set((state) => ({
       sections: state.sections.filter((section) => section.id !== id),
     })),
-  removeFolder: (sectionId: string, folderId: string) =>
+  removeLayer: (sectionId: string, layerId: string) =>
     set((state) => ({
       sections: state.sections.map((section) =>
         section.id === sectionId
           ? {
               ...section,
-              folders: section.folders.filter((folder) => folder.id !== folderId),
-            }
-          : section
-      ),
-    })),
-  removeLayer: (sectionId: string, folderId: string, layerId: string) =>
-    set((state) => ({
-      sections: state.sections.map((section) =>
-        section.id === sectionId
-          ? {
-              ...section,
-              folders: section.folders.map((folder) =>
-                folder.id === folderId
-                  ? {
-                      ...folder,
-                      layers: folder.layers.filter((layer) => layer.id !== layerId),
-                    }
-                  : folder
-              ),
+              layers: section.layers.filter((layer) => layer.id !== layerId),
             }
           : section
       ),
@@ -174,19 +109,16 @@ export const useCustomSectionsStore = create<CustomSectionsState>((set) => ({
           : section
       ),
     })),
-  renameFolder: (sectionId: string, folderId: string, newName: string) =>
+  renameLayer: (sectionId: string, layerId: string, newName: string) =>
     set((state) => ({
       sections: state.sections.map((section) =>
         section.id === sectionId
           ? {
               ...section,
-              folders: section.folders.map((folder) =>
-                folder.id === folderId
-                  ? {
-                      ...folder,
-                      name: newName,
-                    }
-                  : folder
+              layers: section.layers.map((layer) =>
+                layer.id === layerId
+                  ? { ...layer, name: newName }
+                  : layer
               ),
             }
           : section

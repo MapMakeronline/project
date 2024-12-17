@@ -1,148 +1,30 @@
 import React from 'react';
-import { ChevronRight, ChevronDown, Plus, Folder, Trash2, Edit2 } from 'lucide-react';
+import { ChevronRight, ChevronDown, Plus, Trash2, Edit2 } from 'lucide-react';
 import { useCustomSectionsStore } from '../../store/customSectionsStore';
 import { useNotificationStore } from '../../store/notificationStore';
 import { SectionNameModal } from './SectionCreation';
 import { useLayerOrderStore } from '../../store/layerOrderStore';
-
-interface FolderItemProps {
-  sectionId: string;
-  folder: {
-    id: string;
-    name: string;
-    layers: Array<{
-      id: string;
-      name: string;
-      visible: boolean;
-    }>;
-    isExpanded?: boolean;
-  };
-}
-
-function FolderItem({ sectionId, folder }: FolderItemProps) {
-  const { addLayer, toggleLayerVisibility, toggleFolderExpanded, removeFolder, renameFolder } = useCustomSectionsStore();
-  const setActiveLabel = useNotificationStore((state) => state.setActiveLabel);
-  const [isAddingLayer, setIsAddingLayer] = React.useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
-
-  const handleAddLayer = () => {
-    setIsAddingLayer(true);
-    const layerName = `Layer ${folder.layers.length + 1}`;
-    addLayer(sectionId, folder.id, layerName);
-    setTimeout(() => setIsAddingLayer(false), 300);
-  };
-
-  const handleRenameFolder = (newName: string) => {
-    renameFolder(sectionId, folder.id, newName);
-    setIsEditModalOpen(false);
-  };
-
-  const handleDeleteFolder = () => {
-    if (window.confirm('Are you sure you want to delete this folder and all its layers?')) {
-      removeFolder(sectionId, folder.id);
-    }
-  };
-
-  return (
-    <div className="space-y-0.5">
-      <div className={`px-3 py-2 flex items-center justify-between bg-gray-50 rounded-lg ${!isAddingLayer ? 'hover:bg-gray-100' : ''}`}>
-        <button
-          className="flex items-center gap-2 flex-1"
-          onClick={() => toggleFolderExpanded(sectionId, folder.id)}
-          onMouseEnter={() => !isAddingLayer && setActiveLabel(folder.name)}
-          onMouseLeave={() => !isAddingLayer && setActiveLabel(null)}
-        >
-          {folder.isExpanded ? (
-            <ChevronDown className="w-4 h-4" />
-          ) : (
-            <ChevronRight className="w-4 h-4" />
-          )}
-          <Folder className="w-4 h-4 text-gray-400" />
-          <span className="font-medium text-sm text-gray-600">{folder.name}</span>
-        </button>
-        <div className="flex items-center gap-1">
-          <button
-            className="p-1 hover:bg-gray-200 rounded"
-            title="Edit Folder"
-            onClick={() => setIsEditModalOpen(true)}
-          >
-            <Edit2 className="w-4 h-4" />
-          </button>
-          <button
-            className="p-1 hover:bg-gray-200 rounded"
-            title="Delete Folder"
-            onClick={handleDeleteFolder}
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-          <button
-            className="p-1 hover:bg-gray-200 rounded"
-            title="Add Layer"
-            onClick={handleAddLayer}
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      <SectionNameModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        onSubmit={handleRenameFolder}
-        initialValue={folder.name}
-        title="Rename Folder"
-      />
-
-      {folder.isExpanded && (
-        <div className="pl-6 space-y-0.5">
-          {folder.layers.length === 0 ? (
-            <p className="px-2 py-1.5 text-sm text-gray-500 italic">
-              No layers in this folder
-            </p>
-          ) : (
-            folder.layers.map(layer => (
-              <label
-                key={layer.id}
-                className={`flex items-center gap-2 px-2 py-1.5 rounded-lg touch-manipulation ${!isAddingLayer ? 'hover:bg-gray-100/50 active:bg-gray-200/50' : ''}`}
-                onMouseEnter={() => !isAddingLayer && setActiveLabel(layer.name)}
-                onMouseLeave={() => !isAddingLayer && setActiveLabel(null)}
-              >
-                <input
-                  type="checkbox"
-                  checked={layer.visible}
-                  onChange={() => toggleLayerVisibility(sectionId, folder.id, layer.id)}
-                  className="rounded border-gray-300 text-blue-500 focus:ring-blue-500/20 w-4 h-4"
-                />
-                <span className="text-sm text-gray-500">{layer.name}</span>
-              </label>
-            ))
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 interface CustomSectionProps {
   sectionId: string;
 }
 
 export function CustomSection({ sectionId }: CustomSectionProps) {
-  const [isExpanded, setIsExpanded] = React.useState(true);
-  const { sections, addFolder, removeSection, renameSection } = useCustomSectionsStore();
+  const { sections, addLayer, removeSection, renameSection, toggleLayerVisibility, toggleSectionExpanded, removeLayer, renameLayer } = useCustomSectionsStore();
   const { removeSection: removeFromOrder } = useLayerOrderStore();
   const setActiveLabel = useNotificationStore((state) => state.setActiveLabel);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
-  const [isAddingFolder, setIsAddingFolder] = React.useState(false);
+  const [isAddingLayer, setIsAddingLayer] = React.useState(false);
+  const [editingLayer, setEditingLayer] = React.useState<{id: string, name: string} | null>(null);
 
   const section = sections.find(s => s.id === sectionId);
   if (!section) return null;
 
-  const handleAddFolder = (name: string) => {
-    setIsAddingFolder(true);
-    addFolder(sectionId, name);
-    setTimeout(() => setIsAddingFolder(false), 300);
+  const handleAddLayer = (name: string) => {
+    setIsAddingLayer(true);
+    addLayer(sectionId, name);
+    setTimeout(() => setIsAddingLayer(false), 300);
     setIsModalOpen(false);
   };
 
@@ -158,17 +40,34 @@ export function CustomSection({ sectionId }: CustomSectionProps) {
     }
   };
 
+  const handleDeleteLayer = (layerId: string) => {
+    if (window.confirm('Are you sure you want to delete this layer?')) {
+      removeLayer(sectionId, layerId);
+    }
+  };
+
+  const handleEditLayer = (layerId: string, currentName: string) => {
+    setEditingLayer({ id: layerId, name: currentName });
+  };
+
+  const handleRenameLayer = (newName: string) => {
+    if (editingLayer) {
+      renameLayer(sectionId, editingLayer.id, newName);
+      setEditingLayer(null);
+    }
+  };
+
   return (
     <div className="rounded-lg overflow-hidden">
-      <div className={`px-3 py-2 flex items-center justify-between bg-gray-50 rounded-lg ${!isAddingFolder && !isModalOpen ? 'hover:bg-gray-100' : ''}`}
-        onMouseEnter={() => !isAddingFolder && !isModalOpen && setActiveLabel(section.name)}
-        onMouseLeave={() => !isAddingFolder && !isModalOpen && setActiveLabel(null)}
+      <div className={`px-3 py-2 flex items-center justify-between bg-gray-50 rounded-lg ${!isAddingLayer && !isModalOpen ? 'hover:bg-gray-100' : ''}`}
+        onMouseEnter={() => !isAddingLayer && !isModalOpen && setActiveLabel(section.name)}
+        onMouseLeave={() => !isAddingLayer && !isModalOpen && setActiveLabel(null)}
       >
         <button
           className="flex items-center gap-2 flex-1"
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={() => toggleSectionExpanded(sectionId)}
         >
-          {isExpanded ? (
+          {section.isExpanded ? (
             <ChevronDown className="w-4 h-4" />
           ) : (
             <ChevronRight className="w-4 h-4" />
@@ -192,7 +91,7 @@ export function CustomSection({ sectionId }: CustomSectionProps) {
           </button>
           <button
             className="p-1 hover:bg-gray-200 rounded"
-            title="Add Folder"
+            title="Add Layer"
             onClick={() => setIsModalOpen(true)}
           >
             <Plus className="w-4 h-4" />
@@ -202,8 +101,8 @@ export function CustomSection({ sectionId }: CustomSectionProps) {
         <SectionNameModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          onSubmit={handleAddFolder}
-          title="Add New Folder"
+          onSubmit={handleAddLayer}
+          title="Add New Layer"
         />
 
         <SectionNameModal
@@ -213,22 +112,57 @@ export function CustomSection({ sectionId }: CustomSectionProps) {
           initialValue={section.name}
           title="Rename Section"
         />
+
+        <SectionNameModal
+          isOpen={Boolean(editingLayer)}
+          onClose={() => setEditingLayer(null)}
+          onSubmit={handleRenameLayer}
+          initialValue={editingLayer?.name}
+          title="Rename Layer"
+        />
       </div>
 
-      {isExpanded && (
+      {section.isExpanded && (
         <div className="pl-3 space-y-2 mt-2">
-          {section.folders.length === 0 ? (
+          {section.layers.length === 0 ? (
             <p className="px-2 py-1.5 text-sm text-gray-500 italic">
-              No folders created yet
+              No layers added yet
             </p>
           ) : (
-            section.folders.map(folder => (
-              <FolderItem
-                key={folder.id}
-                sectionId={sectionId}
-                folder={folder}
-              />
-            ))
+            <div className="space-y-0.5">
+              {section.layers.map(layer => (
+                <div
+                  key={layer.id}
+                  className={`flex items-center gap-2 px-2 py-1.5 rounded-lg touch-manipulation ${!isAddingLayer ? 'hover:bg-gray-100/50 active:bg-gray-200/50' : ''}`}
+                  onMouseEnter={() => !isAddingLayer && setActiveLabel(layer.name)}
+                  onMouseLeave={() => !isAddingLayer && setActiveLabel(null)}
+                >
+                  <input
+                    type="checkbox"
+                    checked={layer.visible}
+                    onChange={() => toggleLayerVisibility(sectionId, layer.id)}
+                    className="rounded border-gray-300 text-blue-500 focus:ring-blue-500/20 w-4 h-4"
+                  />
+                  <span className="text-sm text-gray-500 flex-1">{layer.name}</span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      className="p-1 hover:bg-gray-200 rounded"
+                      title="Edit Layer"
+                      onClick={() => handleEditLayer(layer.id, layer.name)}
+                    >
+                      <Edit2 className="w-3 h-3" />
+                    </button>
+                    <button
+                      className="p-1 hover:bg-gray-200 rounded"
+                      title="Delete Layer"
+                      onClick={() => handleDeleteLayer(layer.id)}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}

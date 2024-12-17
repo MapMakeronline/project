@@ -1,24 +1,29 @@
 import React, { useRef, useState } from 'react';
-import { FileUp, PenLine, X, FolderPlus, ChevronLeft, Folder as FolderIcon } from 'lucide-react';
-import { useLayerFolderStore, Folder } from '../../store/layerFolderStore'
+import { FileUp, PenLine, X, FolderPlus, ChevronLeft, Plus } from 'lucide-react';
+import { useCustomSectionsStore, CustomSection } from '../../store/customSectionsStore';
+import { useLayerOrderStore } from '../../store/layerOrderStore';
+import { SectionNameModal } from '../LayerTree/SectionCreation';
+
 interface AddDataModalProps {
   onClose: () => void;
 }
 
-type ModalStep = 'initial' | 'folder-select';
+type ModalStep = 'initial' | 'section-select' | 'file-upload';
 type ActionType = 'upload' | 'draw' | null;
 
 export function AddDataModal({ onClose }: AddDataModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState<ModalStep>('initial');
   const [selectedAction, setSelectedAction] = useState<ActionType>(null);
-  const [newFolderName, setNewFolderName] = useState('');
+  const [selectedSection, setSelectedSection] = useState<CustomSection | null>(null);
+  const [isCreateSectionModalOpen, setIsCreateSectionModalOpen] = useState(false);
   
-  const { folders, addFolder, addLayerToFolder } = useLayerFolderStore();
+  const { sections, addSection, addLayer } = useCustomSectionsStore();
+  const { addSection: addSectionToOrder } = useLayerOrderStore();
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file || !selectedSection) return;
 
     try {
       const formData = new FormData();
@@ -33,8 +38,10 @@ export function AddDataModal({ onClose }: AddDataModalProps) {
         throw new Error('Upload failed');
       }
 
-      // Po udanym uploadzie, pokazujemy wybór folderu
-      handleActionSelect('upload');
+      // Add layer to selected section
+      const layerName = file.name.split('.')[0]; // Use filename without extension as layer name
+      addLayer(selectedSection.id, layerName);
+      onClose();
     } catch (error) {
       console.error('Error uploading file:', error);
     }
@@ -42,37 +49,39 @@ export function AddDataModal({ onClose }: AddDataModalProps) {
 
   const handleActionSelect = (action: ActionType) => {
     setSelectedAction(action);
-    setStep('folder-select');
+    setStep('section-select');
   };
 
   const handleBack = () => {
-    setStep('initial');
-    setSelectedAction(null);
+    if (step === 'section-select') {
+      setStep('initial');
+      setSelectedAction(null);
+    } else if (step === 'file-upload') {
+      setStep('section-select');
+      setSelectedSection(null);
+    }
   };
 
-  const handleCreateFolder = () => {
-    if (!newFolderName.trim()) return;
-    
-    // Tworzymy nowy folder
-    addFolder(newFolderName);
-    
-    // Resetujemy stan i zamykamy modal
-    setNewFolderName('');
-    onClose();
+  const handleCreateSection = (name: string) => {
+    const sectionId = addSection(name);
+    // Add section to layer order as well
+    addSectionToOrder(sectionId);
+    const newSection = sections.find(s => s.id === sectionId);
+    if (newSection) {
+      setSelectedSection(newSection);
+      setStep('file-upload');
+    }
   };
 
-  const handleSelectFolder = (folderId: string) => {
-    // Dodajemy warstwę do wybranego folderu
-    // TODO: Dodać rzeczywiste ID warstwy
-    const tempLayerId = `layer-${Date.now()}`;
-    addLayerToFolder(folderId, tempLayerId);
-    onClose();
+  const handleSelectSection = (section: CustomSection) => {
+    setSelectedSection(section);
+    setStep('file-upload');
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 md:items-center">
       <div className={`bg-white w-full max-w-sm rounded-t-xl md:rounded-xl shadow-xl relative overflow-hidden`}>
-        <div className="flex flex-row" style={{ transform: `translateX(-${step === 'folder-select' ? '100' : '0'}%)`, transition: 'transform 0.3s ease-in-out' }}>
+        <div className="flex flex-row" style={{ transform: `translateX(-${step === 'initial' ? '0' : step === 'section-select' ? '100' : '200'}%)`, transition: 'transform 0.3s ease-in-out' }}>
           {/* Initial View */}
           <div className="flex-shrink-0 w-full">
             <div className="flex justify-between items-center p-4 border-b">
@@ -99,17 +108,9 @@ export function AddDataModal({ onClose }: AddDataModalProps) {
                 </div>
               </button>
 
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileSelect}
-                accept=".geojson,.kml,.shp,.csv,.gml"
-                className="hidden"
-              />
-
               <button
                 className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 rounded-lg group"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => handleActionSelect('upload')}
               >
                 <div className="p-2 bg-gray-100 rounded-lg group-hover:bg-gray-200">
                   <FileUp className="w-5 h-5" />
@@ -122,7 +123,7 @@ export function AddDataModal({ onClose }: AddDataModalProps) {
             </div>
           </div>
 
-          {/* Folder Selection View */}
+          {/* Section Selection View */}
           <div className="flex-shrink-0 w-full">
             <div className="flex justify-between items-center p-4 border-b">
               <div className="flex items-center gap-2">
@@ -132,7 +133,7 @@ export function AddDataModal({ onClose }: AddDataModalProps) {
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
-                <h2 className="text-lg font-semibold">Select Folder</h2>
+                <h2 className="text-lg font-semibold">Select Section</h2>
               </div>
               <button 
                 onClick={onClose}
@@ -143,47 +144,85 @@ export function AddDataModal({ onClose }: AddDataModalProps) {
             </div>
             
             <div className="p-4 space-y-4">
-              <div className="space-y-2">
-                <h3 className="font-medium">Create New Folder</h3>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newFolderName}
-                    onChange={(e) => setNewFolderName(e.target.value)}
-                    placeholder="Folder name"
-                    className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <button
-                    onClick={handleCreateFolder}
-                    className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
-                    disabled={!newFolderName.trim()}
-                  >
-                    <FolderPlus className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
+              <button
+                onClick={() => setIsCreateSectionModalOpen(true)}
+                className="w-full flex items-center gap-2 p-3 text-blue-500 hover:bg-blue-50 rounded-lg"
+              >
+                <Plus className="w-5 h-5" />
+                Create New Section
+              </button>
 
               <div className="space-y-2">
-                <h3 className="font-medium">Existing Folders</h3>
+                <h3 className="font-medium">Existing Sections</h3>
                 <div className="space-y-1">
-                  {folders.map((folder: Folder) => (
+                  {sections.map((section) => (
                     <button
-                      key={folder.id}
-                      onClick={() => handleSelectFolder(folder.id)}
-                      className="w-full p-2 text-left hover:bg-gray-50 rounded-lg flex items-center gap-2"
+                      key={section.id}
+                      onClick={() => handleSelectSection(section)}
+                      className="w-full p-3 text-left hover:bg-gray-50 rounded-lg"
                     >
-                      <FolderIcon className="w-4 h-4" />
-                      {folder.name}
+                      {section.name}
                     </button>
                   ))}
-                  {folders.length === 0 && (
-                    <p className="text-sm text-gray-500 p-2">No folders yet</p>
+                  {sections.length === 0 && (
+                    <p className="text-sm text-gray-500 p-2">No sections yet</p>
                   )}
                 </div>
               </div>
             </div>
           </div>
+
+          {/* File Upload View */}
+          <div className="flex-shrink-0 w-full">
+            <div className="flex justify-between items-center p-4 border-b">
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={handleBack}
+                  className="p-2 hover:bg-gray-100 rounded-lg"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <h2 className="text-lg font-semibold">Upload File</h2>
+              </div>
+              <button 
+                onClick={onClose}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-4">
+              <div className="text-sm text-gray-600 mb-4">
+                Selected section: <span className="font-medium">{selectedSection?.name}</span>
+              </div>
+              
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                accept=".geojson,.kml,.shp,.csv,.gml"
+                className="hidden"
+              />
+
+              <button
+                className="w-full flex items-center justify-center gap-2 p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <FileUp className="w-5 h-5" />
+                Choose File
+              </button>
+            </div>
+          </div>
         </div>
+
+        {/* Section Creation Modal */}
+        <SectionNameModal
+          isOpen={isCreateSectionModalOpen}
+          onClose={() => setIsCreateSectionModalOpen(false)}
+          onSubmit={handleCreateSection}
+          title="Create New Section"
+        />
       </div>
     </div>
   );

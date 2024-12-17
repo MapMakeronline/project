@@ -15,7 +15,6 @@ export function AttributesTable() {
   const { isVisible, selectedLayerId, selectedSectionId, hideAttributesTable } = useAttributesTableStore();
   const sections = useCustomSectionsStore((state) => state.sections);
 
-  // Debug logging
   useEffect(() => {
     console.log('AttributesTable state:', {
       isVisible,
@@ -33,7 +32,6 @@ export function AttributesTable() {
     }
   };
 
-  // First priority: Show layer attributes if a layer is selected
   if (isVisible && selectedLayerId && selectedSectionId) {
     console.log('Rendering layer attributes view');
     const section = sections.find(s => s.id === selectedSectionId);
@@ -43,11 +41,11 @@ export function AttributesTable() {
       return (
         <SwipeHandler onSwipe={handleSwipe}>
           <div 
-            className={`fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm shadow-lg transition-all duration-300 transform z-50 ${
+            className={`fixed bottom-0 left-0 right-0 bg-white shadow-xl transition-all duration-300 transform z-50 ${
               isExpanded ? 'h-96' : 'h-12'
             }`}
           >
-            <div className="px-4 py-2 flex items-center justify-between border-b sticky top-0 bg-white/90 backdrop-blur-sm">
+            <div className="px-4 py-2 flex items-center justify-between border-b border-gray-300 sticky top-0 bg-white">
               <div className="flex items-center gap-2">
                 <MinimizeButton
                   direction="up"
@@ -55,11 +53,11 @@ export function AttributesTable() {
                   onClick={() => setIsExpanded(!isExpanded)}
                   className="!p-1"
                 />
-                <span className="font-medium">{layer.name} Attributes</span>
+                <span className="font-semibold text-gray-800">{layer.name} Attributes</span>
               </div>
               <button
                 onClick={hideAttributesTable}
-                className="p-1 hover:bg-gray-100 rounded"
+                className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
                 title="Close"
               >
                 <X className="w-5 h-5" />
@@ -69,20 +67,20 @@ export function AttributesTable() {
             <div className={`overflow-auto transition-all duration-300 ${
               isExpanded ? 'h-[calc(100%-3rem)] opacity-100' : 'h-0 opacity-0'
             }`}>
-              <div className="p-4">
-                <table className="w-full">
-                  <tbody className="divide-y">
+              <div className="p-0">
+                <table className="w-full border-collapse [border-spacing:0]" style={{ border: '1px solid #d1d5db' }}>
+                  <tbody>
                     <tr>
-                      <th className="py-2 px-4 text-left font-medium text-gray-600">Layer Name</th>
-                      <td className="py-2 px-4">{layer.name}</td>
+                      <th className="py-1.5 px-3 text-left font-medium border border-gray-300 bg-white w-1/2">Layer Name</th>
+                      <td className="py-1.5 px-3 border border-gray-300 bg-white w-1/2">{layer.name}</td>
                     </tr>
                     <tr>
-                      <th className="py-2 px-4 text-left font-medium text-gray-600">Section</th>
-                      <td className="py-2 px-4">{section.name}</td>
+                      <th className="py-1.5 px-3 text-left font-medium border border-gray-300 bg-white w-1/2">Section</th>
+                      <td className="py-1.5 px-3 border border-gray-300 bg-white w-1/2">{section.name}</td>
                     </tr>
                     <tr>
-                      <th className="py-2 px-4 text-left font-medium text-gray-600">Visibility</th>
-                      <td className="py-2 px-4">{layer.visible ? 'Visible' : 'Hidden'}</td>
+                      <th className="py-1.5 px-3 text-left font-medium border border-gray-300 bg-white w-1/2">Visibility</th>
+                      <td className="py-1.5 px-3 border border-gray-300 bg-white w-1/2">{layer.visible ? 'Visible' : 'Hidden'}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -94,15 +92,14 @@ export function AttributesTable() {
     }
   }
 
-  // Second priority: Show property details if a property is selected
   if (selectedProperty) {
     console.log('Rendering property details view');
     return (
       <SwipeHandler onSwipe={handleSwipe}>
-        <div className={`fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm shadow-lg transition-all duration-300 transform z-50 ${
+        <div className={`fixed bottom-0 left-0 right-0 bg-white shadow-xl transition-all duration-300 transform z-50 ${
           isExpanded ? 'h-96' : 'h-12'
         }`}>
-          <div className="px-4 py-2 flex items-center justify-between border-b sticky top-0 bg-white/90 backdrop-blur-sm">
+          <div className="px-4 py-2 flex items-center justify-between border-b border-gray-300 sticky top-0 bg-white">
             <div className="flex items-center gap-2">
               <MinimizeButton
                 direction="up"
@@ -110,11 +107,11 @@ export function AttributesTable() {
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="!p-1"
               />
-              <span className="font-medium">Property Details</span>
+              <span className="font-semibold text-gray-800">Property Details</span>
             </div>
             <button
               onClick={() => setSelectedProperty(null)}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
               title="Close"
             >
               <X className="w-5 h-5" />
@@ -125,28 +122,28 @@ export function AttributesTable() {
             isExpanded ? 'h-[calc(100%-3rem)] opacity-100' : 'h-0 opacity-0'
           }`}>
             <div className="p-4">
-              <table className="w-full">
-                <tbody className="divide-y">
+              <table className="w-full border-collapse [border-spacing:0]" style={{ border: '1px solid #d1d5db' }}>
+                <tbody>
                   <tr>
-                    <th className="py-2 px-4 text-left font-medium text-gray-600">Title</th>
-                    <td className="py-2 px-4">{selectedProperty.title}</td>
+                    <th className="py-1.5 px-3 text-left font-medium border border-gray-300 bg-white w-1/2">Title</th>
+                    <td className="py-1.5 px-3 border border-gray-300 bg-white w-1/2">{selectedProperty.title}</td>
                   </tr>
                   <tr>
-                    <th className="py-2 px-4 text-left font-medium text-gray-600">Plot Number</th>
-                    <td className="py-2 px-4">{selectedProperty.plotNumber}</td>
+                    <th className="py-1.5 px-3 text-left font-medium border border-gray-300 bg-white w-1/2">Plot Number</th>
+                    <td className="py-1.5 px-3 border border-gray-300 bg-white w-1/2">{selectedProperty.plotNumber}</td>
                   </tr>
                   <tr>
-                    <th className="py-2 px-4 text-left font-medium text-gray-600">Area</th>
-                    <td className="py-2 px-4">{selectedProperty.area} m²</td>
+                    <th className="py-1.5 px-3 text-left font-medium border border-gray-300 bg-white w-1/2">Area</th>
+                    <td className="py-1.5 px-3 border border-gray-300 bg-white w-1/2">{selectedProperty.area} m²</td>
                   </tr>
                   <tr>
-                    <th className="py-2 px-4 text-left font-medium text-gray-600">Price</th>
-                    <td className="py-2 px-4">${selectedProperty.price.toLocaleString()}</td>
+                    <th className="py-1.5 px-3 text-left font-medium border border-gray-300 bg-white w-1/2">Price</th>
+                    <td className="py-1.5 px-3 border border-gray-300 bg-white w-1/2">${selectedProperty.price.toLocaleString()}</td>
                   </tr>
                   <tr>
-                    <th className="py-2 px-4 text-left font-medium text-gray-600">Status</th>
-                    <td className="py-2 px-4">
-                      <span className={`px-2 py-1 rounded-full text-sm ${
+                    <th className="py-1.5 px-3 text-left font-medium border border-gray-300 bg-white w-1/2">Status</th>
+                    <td className="py-1.5 px-3 border border-gray-300 bg-white w-1/2">
+                      <span className={`px-2 py-0.5 rounded text-sm ${
                         selectedProperty.status === 'available' ? 'bg-green-100 text-green-800' :
                         selectedProperty.status === 'reserved' ? 'bg-yellow-100 text-yellow-800' :
                         'bg-red-100 text-red-800'
@@ -156,16 +153,16 @@ export function AttributesTable() {
                     </td>
                   </tr>
                   <tr>
-                    <th className="py-2 px-4 text-left font-medium text-gray-600">District</th>
-                    <td className="py-2 px-4">{selectedProperty.district}</td>
+                    <th className="py-1.5 px-3 text-left font-medium border border-gray-300 bg-white w-1/2">District</th>
+                    <td className="py-1.5 px-3 border border-gray-300 bg-white w-1/2">{selectedProperty.district}</td>
                   </tr>
                   <tr>
-                    <th className="py-2 px-4 text-left font-medium text-gray-600">Description</th>
-                    <td className="py-2 px-4">{selectedProperty.description}</td>
+                    <th className="py-1.5 px-3 text-left font-medium border border-gray-300 bg-white w-1/2">Description</th>
+                    <td className="py-1.5 px-3 border border-gray-300 bg-white w-1/2">{selectedProperty.description}</td>
                   </tr>
                   <tr>
-                    <th className="py-2 px-4 text-left font-medium text-gray-600">Location</th>
-                    <td className="py-2 px-4">
+                    <th className="py-1.5 px-3 text-left font-medium border border-gray-300 bg-white w-1/2">Location</th>
+                    <td className="py-1.5 px-3 border border-gray-300 bg-white w-1/2">
                       Lat: {selectedProperty.location.lat.toFixed(6)}<br />
                       Lng: {selectedProperty.location.lng.toFixed(6)}
                     </td>
@@ -179,7 +176,6 @@ export function AttributesTable() {
     );
   }
 
-  // Default state: Show AddDataButton and BaseLayers
   console.log('Rendering default view');
   return (
     <div className="fixed bottom-4 left-20 z-40">

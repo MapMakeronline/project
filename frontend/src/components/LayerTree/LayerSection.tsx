@@ -2,6 +2,7 @@ import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
+import { useLayerOrderStore } from '../../store/layerOrderStore';
 
 interface LayerSectionProps {
   id: string;
@@ -20,14 +21,14 @@ export function LayerSection({ id, children }: LayerSectionProps) {
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition
   };
 
   return (
     <div 
       ref={setNodeRef} 
       style={style} 
-      className={`relative ${isDragging ? 'z-50' : 'z-0'}`}
+      className="relative"
     >
       <div className="group relative">
         <div

@@ -68,7 +68,7 @@ export function FunctionBar() {
 
   return (
     <SwipeHandler onSwipe={handleSwipe} className={`fixed right-0 bg-white/90 backdrop-blur-sm shadow-lg z-40 transition-all duration-300 ${
-      headerIsMinimized ? 'top-4' : 'top-20'
+      headerIsMinimized ? 'top-4' : 'top-40'
     } ${
       isMinimized ? 'translate-x-full' : 'translate-x-0'
     }`}>

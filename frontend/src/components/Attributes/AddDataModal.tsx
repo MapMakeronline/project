@@ -28,7 +28,7 @@ export function AddDataModal({ onClose }: AddDataModalProps) {
     try {
       const formData = new FormData();
       formData.append('file', file);
-
+      // dziala
       const response = await fetch('https://backend-1004166685896.europe-central2.run.app/api/upload/', {
         method: 'POST',
         body: formData,

@@ -29,10 +29,12 @@ REACT_BUILD_PATH = '/Users/ernestilchenko/project/frontend/build'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 ALLOWED_HOSTS = ['*']
-# CSRF_TRUSTED_ORIGINS = [
-#     'https://backend-1004166685896.europe-central2.run.app',
-#     'https://frontend-1004166685896.europe-central2.run.app'
-# ]
+CSRF_TRUSTED_ORIGINS = [
+    # 'https://backend-1004166685896.europe-central2.run.app',
+    # 'https://frontend-1004166685896.europe-central2.run.app'
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
@@ -167,3 +169,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SESSION_COOKIE_SECURE = False
 SESSION_COOKIE_SAMESITE = 'Lax'
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+CSRF_COOKIE_SECURE = False

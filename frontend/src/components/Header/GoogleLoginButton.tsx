@@ -7,7 +7,7 @@ export function GoogleLoginButton() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch('/api/auth/user/', {
+        const response = await fetch('https://backend-1004166685896.europe-central2.run.app/api/auth/user/', {
           credentials: 'include'
         });
         if (response.ok) {
@@ -24,7 +24,7 @@ export function GoogleLoginButton() {
   }, [setUser]);
 
   const handleGoogleLogin = () => {
-    window.location.href = 'http://127.0.0.1:8000/accounts/google/login/';
+    window.location.href = 'https://backend-1004166685896.europe-central2.run.app/accounts/google/login/';
   };
 
   if (isAuthenticated && user) {

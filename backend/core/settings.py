@@ -36,10 +36,10 @@ CSRF_TRUSTED_ORIGINS = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://frontend-1004166685896.europe-central2.run.app"
 ]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_ALLOW_ALL = True
-CORS_ALLOWED_CREDENTIALS = True
 APPEND_SLASH = False
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -178,3 +178,11 @@ CORS_ALLOW_METHODS = [
 CSRF_COOKIE_SECURE = False
 CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_HTTPONLY = True
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_AUTH_EXTRA_ARGUMENTS = {
+    'access_type': 'offline',
+    'scheme': 'https'
+}
+
+SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS = ['backend-1004166685896.europe-central2.run.app']
+SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = 'https://backend-1004166685896.europe-central2.run.app/accounts/google/login/callback/'

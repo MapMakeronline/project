@@ -9,7 +9,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import path, reverse
 from django.utils.html import format_html
 
-from .models import UploadedFile, CSVFile, DatabaseTable
+from .models import UploadedFile, CSVFile, DatabaseTable, Section, Folder, FileRecord
 
 
 # Register your models here.
@@ -238,3 +238,30 @@ class DatabaseTableAdmin(admin.ModelAdmin):
         except Exception as e:
             logger.error(f"Error viewing table {table_name}: {str(e)}")
             return HttpResponse(f"Błąd podczas wyświetlania tabeli: {str(e)}")
+
+
+@admin.register(Section)
+class SectionAdmin(admin.ModelAdmin):
+    list_display = ('name', 'user', 'order', 'created_at')
+    list_filter = ('user', 'created_at')
+    search_fields = ('name', 'user__email')
+    ordering = ('order', 'created_at')
+    readonly_fields = ('id', 'created_at')
+
+
+@admin.register(Folder)
+class FolderAdmin(admin.ModelAdmin):
+    list_display = ('name', 'section', 'order', 'created_at')
+    list_filter = ('section', 'created_at')
+    search_fields = ('name', 'section__name')
+    ordering = ('order', 'created_at')
+    readonly_fields = ('id', 'created_at')
+
+
+@admin.register(FileRecord)
+class FileRecordAdmin(admin.ModelAdmin):
+    list_display = ('name', 'folder', 'file_type', 'order', 'created_at')
+    list_filter = ('file_type', 'folder', 'created_at')
+    search_fields = ('name', 'folder__name')
+    ordering = ('order', 'created_at')
+    readonly_fields = ('id', 'created_at')

@@ -3,7 +3,7 @@ import logging
 import re
 import uuid
 
-from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
 from django.db import models, transaction, connection
 from django.db.models import QuerySet
 
@@ -63,6 +63,7 @@ class DatabaseTable(models.Model):
 
     def __str__(self):
         return f"{self.table_name} ({self.row_count} wierszy)"
+
     def __str__(self):
         return f"{self.table_name} ({self.row_count} wierszy)"
 
@@ -312,7 +313,6 @@ class UploadedFile(models.Model):
                 cursor.execute(f"DROP TABLE IF EXISTS {self.table_name}")
         super().delete(*args, **kwargs)
 
-User = get_user_model()
 
 class Section(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -328,6 +328,7 @@ class Section(models.Model):
     def __str__(self):
         return f"{self.name} - {self.user.email}"
 
+
 class Folder(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
@@ -341,6 +342,7 @@ class Folder(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.section.name}"
+
 
 class FileRecord(models.Model):
     FILE_TYPES = [

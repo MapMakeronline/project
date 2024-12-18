@@ -5,8 +5,8 @@ import { FilterButton } from './FilterButton';
 import { MinimizeButton } from '../common/MinimizeButton';
 import { SwipeHandler } from '../common/SwipeHandler';
 import { useHeaderStore } from '../../store/headerStore';
-import { HelpGuide } from './HelpGuide';
 import { GoogleLoginButton } from './GoogleLoginButton';
+import { HelpButton } from './HelpButton';
 
 export function Header() {
   const { isMinimized, setIsMinimized } = useHeaderStore();
@@ -33,7 +33,7 @@ export function Header() {
                 <span className="text-2xl md:text-xl font-bold">PlotFinder</span>
               </div>
               <div className="flex items-center gap-4">
-                <HelpGuide />
+                <HelpButton />
                 {/* <div className="hidden md:block">
                   <GoogleLoginButton />
                 </div> */}

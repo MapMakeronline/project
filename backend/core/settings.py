@@ -29,10 +29,10 @@ REACT_BUILD_PATH = '/Users/ernestilchenko/project/frontend/build'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 ALLOWED_HOSTS = ['*']
-# CSRF_TRUSTED_ORIGINS = [
-#     'https://backend-1004166685896.europe-central2.run.app',
-#     'https://frontend-1004166685896.europe-central2.run.app'
-# ]
+CSRF_TRUSTED_ORIGINS = [
+    'https://backend-1004166685896.europe-central2.run.app',
+    'https://frontend-1004166685896.europe-central2.run.app'
+]
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",

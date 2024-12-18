@@ -1,7 +1,9 @@
 import csv
 import logging
 import re
+import uuid
 
+from django.contrib.auth.models import User
 from django.db import models, transaction, connection
 from django.db.models import QuerySet
 
@@ -61,6 +63,7 @@ class DatabaseTable(models.Model):
 
     def __str__(self):
         return f"{self.table_name} ({self.row_count} wierszy)"
+
     def __str__(self):
         return f"{self.table_name} ({self.row_count} wierszy)"
 
@@ -309,3 +312,57 @@ class UploadedFile(models.Model):
             with connection.cursor() as cursor:
                 cursor.execute(f"DROP TABLE IF EXISTS {self.table_name}")
         super().delete(*args, **kwargs)
+
+
+class Section(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sections')
+    order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', 'created_at']
+        unique_together = ['user', 'name']
+
+    def __str__(self):
+        return f"{self.name} - {self.user.email}"
+
+
+class Folder(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255)
+    section = models.ForeignKey(Section, on_delete=models.CASCADE, related_name='folders')
+    order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', 'created_at']
+        unique_together = ['section', 'name']
+
+    def __str__(self):
+        return f"{self.name} - {self.section.name}"
+
+
+class FileRecord(models.Model):
+    FILE_TYPES = [
+        ('geojson', 'GeoJSON'),
+        ('kml', 'KML'),
+        ('shp', 'Shapefile'),
+        ('csv', 'CSV'),
+        ('gml', 'GML'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255)
+    folder = models.ForeignKey(Folder, on_delete=models.CASCADE, related_name='files')
+    file_type = models.CharField(max_length=10, choices=FILE_TYPES)
+    order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', 'created_at']
+        unique_together = ['folder', 'name']
+
+    def __str__(self):
+        return f"{self.name} ({self.file_type}) - {self.folder.name}"
